@@ -142,7 +142,7 @@
         },
         {
           "command": "dotnet-test-explorer.debugTest",
-          "when": "viewItem == test",
+          "when": "view == dotnetTestExplorer",
           "group": "dotnetTestExplorer@2"
         }
       ],
