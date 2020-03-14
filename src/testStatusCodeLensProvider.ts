@@ -49,7 +49,7 @@ export class TestStatusCodeLensProvider implements CodeLensProvider {
                             mapped.push(
                                 new TestStatusCodeLens(
                                     symbol.documentSymbol.selectionRange,
-                                    state + (result.duration ? `[${result.duration}]` : "")));
+                                    state + (result.duration ? ` [${result.duration}]` : "")));
                             break;
                         }
                     } else if (result.matchesTheory(symbol.parentName, symbol.documentSymbol.name)) {
