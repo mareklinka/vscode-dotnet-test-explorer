@@ -6,6 +6,7 @@ export class TestNode {
     private _isLoading: boolean;
     private _icon: string;
     private _fqn: string;
+    private _duration: string;
 
     constructor(private _parentPath: string, private _name: string, private _separator: string, testResults: TestResult[], private _children?: TestNode[]) {
         this.setIcon(testResults);
@@ -15,7 +16,7 @@ export class TestNode {
     }
 
     public get name(): string {
-        return this._name;
+        return this._name + (this._duration ? ` [${this._duration}]` : "");
     }
 
     public get fullName(): string {
@@ -80,8 +81,10 @@ export class TestNode {
 
                 if (resultForTest) {
                     this._icon = "test".concat(resultForTest.outcome, ".png");
+                    this._duration = resultForTest.duration;
                 } else {
                     this._icon = "testNotRun.png";
+                    this._duration = undefined;
                 }
             }
         }

@@ -46,7 +46,10 @@ export class TestStatusCodeLensProvider implements CodeLensProvider {
                     if (result.matches(symbol.parentName, symbol.documentSymbol.name)) {
                         const state = TestStatusCodeLens.parseOutcome(result.outcome);
                         if (state) {
-                            mapped.push(new TestStatusCodeLens(symbol.documentSymbol.selectionRange, state));
+                            mapped.push(
+                                new TestStatusCodeLens(
+                                    symbol.documentSymbol.selectionRange,
+                                    state + (result.duration ? `[${result.duration}]` : "")));
                             break;
                         }
                     } else if (result.matchesTheory(symbol.parentName, symbol.documentSymbol.name)) {
