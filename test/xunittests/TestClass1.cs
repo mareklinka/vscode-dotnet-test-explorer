@@ -25,6 +25,23 @@ namespace XunitTests
             {
                 (1+1).ShouldBe(2);
             }
+            public class InnerNestedClass
+            {
+                [Fact]
+                public void Fail()
+                {
+                    (1+1).ShouldBe(0);
+                }
+
+                public class InnerInnerNestedClass
+                {
+                    [Fact]
+                    public void Fail()
+                    {
+                        (1+1).ShouldBe(0);
+                    }
+                }
+            }
         }
 
         [Fact]
@@ -37,7 +54,7 @@ namespace XunitTests
         public void PassNew()
         {
             (1+1).ShouldBe(2);
-        }        
+        }
 
 
         [Fact]
@@ -51,20 +68,20 @@ namespace XunitTests
         // public void Fail()
         // {
         //     (1+new InnerC().Get()).ShouldBe(3);
-        // }      
+        // }
 
         // [Fact]
         // public void Fail2()
         // {
         //     (1+new InnerC().Get()).ShouldBe(3);
-        // }  
+        // }
 
                 [Fact]
         public void Fail3()
         {
             (1+1).ShouldBe(2);
-            
-        }    
+
+        }
     }
 
     public class InnerC

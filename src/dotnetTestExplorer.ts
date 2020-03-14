@@ -11,6 +11,12 @@ import { ITestResult, TestResult } from "./testResult";
 import { TestResultsFile } from "./testResultsFile";
 import { Utility } from "./utility";
 
+export interface ITreeNode {
+    tests: string[];
+    nodes: Map<string, ITreeNode>;
+    isNested: boolean;
+}
+
 export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
 
     public _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
@@ -70,14 +76,14 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
         }
 
         if (!this.discoveredTests) {
-            const loadingNode = new TestNode("", "Discovering tests", this.testResults);
+            const loadingNode = new TestNode("", "Discovering tests", ".", this.testResults);
             loadingNode.setAsLoading();
             return [loadingNode];
         }
 
         if (this.discoveredTests.length === 0) {
             return ["Please open or set the test project", "and ensure your project compiles."].map((e) => {
-                const node = new TestNode("", e, this.testResults);
+                const node = new TestNode("", e, ".", this.testResults);
                 node.setAsError(e);
                 return node;
             });
@@ -87,11 +93,11 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
 
         if (!useTreeView) {
             return this.discoveredTests.map((name) => {
-                return new TestNode("", name, this.testResults);
+                return new TestNode("", name, ".", this.testResults);
             });
         }
 
-        const structuredTests = {};
+        const structuredTests: ITreeNode = { tests: [], nodes: new Map<string, ITreeNode>(), isNested: false };
 
         this.allNodes = [];
 
@@ -109,39 +115,43 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
         return root;
     }
 
-    private addToObject(container: object, parts: string[]): void {
+    private addToObject(container: ITreeNode, parts: string[]): void {
         const title = parts.splice(0, 1)[0];
 
-        if (parts.length > 1) {
-            if (!container[title]) {
-                container[title] = {};
-            }
-            this.addToObject(container[title], parts);
-        } else {
-            if (!container[title]) {
-                container[title] = [];
+        if (parts.length >= 1) {
+            const split = title.split("+");
+            let c: ITreeNode = container;
+
+            for (let i = 0; i < split.length; ++i) {
+                if (!c.nodes.has(split[i])) {
+                    c.nodes.set(split[i], { tests: [], nodes: new Map<string, ITreeNode>(), isNested: (i < split.length - 1) });
+                }
+                c = c.nodes.get(split[i]);
             }
 
-            if (parts.length === 1) {
-                container[title].push(parts[0]);
-            }
+            this.addToObject(c, parts);
+        } else {
+            container.tests.push(title);
         }
     }
 
-    private createTestNode(parentPath: string, test: object | string): TestNode[] {
+    private createTestNode(parentPath: string, test: ITreeNode): TestNode[] {
         let testNodes: TestNode[];
 
-        if (Array.isArray(test)) {
-            testNodes = test.map((t) => {
-                return new TestNode(parentPath, t, this.testResults);
-            });
-        } else if (typeof test === "object") {
-            testNodes = Object.keys(test).map((key) => {
-                return new TestNode(parentPath, key, this.testResults, this.createTestNode((parentPath ? `${parentPath}.` : "") + key, test[key]));
-            });
-        } else {
-            testNodes = [new TestNode(parentPath, test, this.testResults)];
-        }
+        testNodes = Array.from(test.nodes.keys()).map((key) => {
+            return new TestNode(
+                parentPath,
+                key,
+                test.isNested ? `+` : `.`,
+                this.testResults,
+                this.createTestNode(
+                    (parentPath ? (test.isNested ? `${parentPath}+` : `${parentPath}.`) : "") + key,
+                     test.nodes.get(key)));
+        });
+
+        testNodes = testNodes.concat(test.tests.map((t) => {
+            return new TestNode(parentPath, t, ".", this.testResults);
+        }));
 
         this.allNodes = this.allNodes.concat(testNodes);
 

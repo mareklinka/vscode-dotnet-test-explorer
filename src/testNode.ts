@@ -7,7 +7,7 @@ export class TestNode {
     private _icon: string;
     private _fqn: string;
 
-    constructor(private _parentPath: string, private _name: string, testResults: TestResult[], private _children?: TestNode[]) {
+    constructor(private _parentPath: string, private _name: string, private _separator: string, testResults: TestResult[], private _children?: TestNode[]) {
         this.setIcon(testResults);
 
         this._fqn = Utility
@@ -19,7 +19,7 @@ export class TestNode {
     }
 
     public get fullName(): string {
-        return (this._parentPath ? `${this._parentPath}.` : "") + this._name;
+        return (this._parentPath ? `${this._parentPath}${this._separator}` : "") + this._name;
     }
 
     public get fqn(): string {
