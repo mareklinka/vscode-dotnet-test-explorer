@@ -58,7 +58,7 @@ export class Utility {
                     name = name.substring(0, firstParanthesis);
                 }
 
-                return name;
+                return name.trimRight();
             })
             .join(".");
     }
