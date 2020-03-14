@@ -82,7 +82,7 @@ export class Executor {
 
                 if (this.debugRunnerInfo.config) {
 
-                    Logger.Log(`Debugger process found, attaching`);
+                    Logger.Log(`Debugger process found (${this.debugRunnerInfo.processId}), attaching`);
 
                     this.debugRunnerInfo.isRunning = true;
 
@@ -93,11 +93,19 @@ export class Executor {
                             vscode.commands.executeCommand("workbench.action.debug.continue");
                         }, 1000);
                     });
+
+                    vscode.debug.onDidTerminateDebugSession((_) => {
+                        setTimeout(() => {
+                            // sometimes the spawned process doesn't terminate properly
+                            // wait for 5s for a graceful termination, then force-kill it
+                            Logger.LogWarning(`The test process refused to terminate gracefully, force-stopping`);
+                            fkill(childProcess.pid, { force: true });
+                        }, 5000);
+                    });
                 }
             });
 
             childProcess.on("close", (code: number) => {
-
                 Logger.Log(`Debugger finished`);
 
                 this.debugRunnerInfo = null;
