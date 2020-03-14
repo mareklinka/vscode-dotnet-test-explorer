@@ -3,11 +3,11 @@ import { ChildProcess, exec } from "child_process";
 import * as fkill from "fkill";
 import { platform } from "os";
 import * as vscode from "vscode";
+import { Event, EventEmitter } from "vscode";
 import { Debug, IDebugRunnerInfo } from "./debug";
 import { Logger } from "./logger";
 
 export class Executor {
-
     public static runInTerminal(command: string, cwd?: string, addNewLine: boolean = true, terminal: string = "Test Explorer"): void {
         if (this.terminals[terminal] === undefined) {
             this.terminals[terminal] = vscode.window.createTerminal(terminal);
@@ -39,6 +39,7 @@ export class Executor {
                 if (index > -1) {
                     this.processes.splice(index, 1);
                     Logger.Log(`Process ${childProcess.pid} finished`);
+                    this.onTestProcessFinishedEmitter.fire();
                 }
             });
         }
@@ -107,6 +108,7 @@ export class Executor {
                 if (index > -1) {
                     this.processes.splice(index, 1);
                     Logger.Log(`Process ${childProcess.pid} finished`);
+                    Executor.onTestProcessFinishedEmitter.fire();
                 }
             });
         }
@@ -129,6 +131,10 @@ export class Executor {
         this.debugRunnerInfo = null;
     }
 
+    public static get onTestProcessFinished(): Event<void> {
+        return Executor.onTestProcessFinishedEmitter.event;
+    }
+
     private static debugRunnerInfo: IDebugRunnerInfo;
 
     private static terminals: { [id: string]: vscode.Terminal } = {};
@@ -136,6 +142,8 @@ export class Executor {
     private static isWindows: boolean = platform() === "win32";
 
     private static processes: ChildProcess[] = [];
+
+    private static onTestProcessFinishedEmitter = new EventEmitter<void>();
 
     private static handleWindowsEncoding(command: string): string {
         return this.isWindows ? `chcp 65001 | ${command}` : command;
