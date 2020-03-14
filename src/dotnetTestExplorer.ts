@@ -138,7 +138,7 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
     private createTestNode(parentPath: string, test: ITreeNode): TestNode[] {
         let testNodes: TestNode[];
 
-        testNodes = Array.from(test.nodes.keys()).map((key) => {
+        testNodes = Array.from(test.nodes.keys()).sort().map((key) => {
             return new TestNode(
                 parentPath,
                 key,
@@ -149,7 +149,7 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
                      test.nodes.get(key)));
         });
 
-        testNodes = testNodes.concat(test.tests.map((t) => {
+        testNodes = testNodes.concat(test.tests.sort().map((t) => {
             return new TestNode(parentPath, t, ".", this.testResults);
         }));
 
