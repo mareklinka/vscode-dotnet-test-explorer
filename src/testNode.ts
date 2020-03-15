@@ -77,11 +77,12 @@ export class TestNode {
                     this._icon = "namespace.png";
                 }
             } else {
+                const showDuration = Utility.getConfiguration().get<boolean>("showTestDuration");
                 const resultForTest = testResults.find((tr) => tr.fullName === this.fullName);
 
                 if (resultForTest) {
                     this._icon = "test".concat(resultForTest.outcome, ".png");
-                    this._duration = resultForTest.duration;
+                    this._duration = showDuration ? resultForTest.duration : undefined;
                 } else {
                     this._icon = "testNotRun.png";
                     this._duration = undefined;

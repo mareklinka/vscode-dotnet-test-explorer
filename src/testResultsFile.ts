@@ -1,8 +1,8 @@
 "use strict";
 import * as fs from "fs";
+import * as moment from "moment";
 import { DOMParser, Element, Node } from "xmldom";
 import { TestResult } from "./testResult";
-import * as moment from 'moment';
 
 function findChildElement(node: Node, name: string): Node {
     let child = node.firstChild;

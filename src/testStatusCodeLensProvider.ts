@@ -1,5 +1,5 @@
 "use strict";
-import { CancellationToken, CodeLens, CodeLensProvider, commands, Disposable, Event, EventEmitter, Range, SymbolInformation, SymbolKind, TextDocument } from "vscode";
+import { CancellationToken, CodeLens, CodeLensProvider, Disposable, Event, EventEmitter, SymbolKind, TextDocument } from "vscode";
 import { ITestSymbol, Symbols } from "./symbols";
 import { TestCommands } from "./testCommands";
 import { ITestResult, TestResult } from "./testResult";
@@ -31,12 +31,17 @@ export class TestStatusCodeLensProvider implements CodeLensProvider {
         return this.onDidChangeCodeLensesEmitter.event;
     }
 
+    public redrawCodeLens(): void {
+        this.onDidChangeCodeLensesEmitter.fire();
+    }
+
     public provideCodeLenses(document: TextDocument, token: CancellationToken): CodeLens[] | Thenable<CodeLens[]> {
         if (!Utility.codeLensEnabled) {
             return [];
         }
 
         const results = this.testResults;
+        const showDuration = Utility.getConfiguration().get<boolean>("showTestDuration");
 
         return Symbols.getSymbols(document.uri, true)
         .then((symbols: ITestSymbol[]) => {
@@ -44,12 +49,16 @@ export class TestStatusCodeLensProvider implements CodeLensProvider {
             for (const symbol of symbols.filter((x) => x.documentSymbol.kind === SymbolKind.Method)) {
                 for (const result of results.values()) {
                     if (result.matches(symbol.parentName, symbol.documentSymbol.name)) {
-                        const state = TestStatusCodeLens.parseOutcome(result.outcome);
+                        let state = TestStatusCodeLens.parseOutcome(result.outcome);
                         if (state) {
+                            if (showDuration) {
+                                state = state + (result.duration ? ` [${result.duration}]` : "");
+                            }
+
                             mapped.push(
                                 new TestStatusCodeLens(
                                     symbol.documentSymbol.selectionRange,
-                                    state + (result.duration ? ` [${result.duration}]` : "")));
+                                    state));
                             break;
                         }
                     } else if (result.matchesTheory(symbol.parentName, symbol.documentSymbol.name)) {

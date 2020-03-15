@@ -1,7 +1,6 @@
 "use strict";
 
 import * as vscode from "vscode";
-import { AppInsights } from "./appInsights";
 import { AppInsightsClient } from "./appInsightsClient";
 import { DotnetTestExplorer } from "./dotnetTestExplorer";
 import { Executor } from "./executor";
@@ -17,7 +16,6 @@ import { TestNode } from "./testNode";
 import { TestResultsFile } from "./testResultsFile";
 import { TestStatusCodeLensProvider } from "./testStatusCodeLensProvider";
 import { Utility } from "./utility";
-import { Watch } from "./watch";
 
 export function activate(context: vscode.ExtensionContext) {
     const testResults = new TestResultsFile();
@@ -27,9 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
     const findTestInContext = new FindTestInContext();
     const problems = new Problems(testCommands);
     const statusBar = new StatusBar(testCommands);
-    const watch = new Watch(testCommands, testDirectories);
     const leftClickTest = new LeftClickTest();
-    const appInsights = new AppInsights(testCommands, testDirectories);
 
     Logger.Log("Starting extension");
 
@@ -40,6 +36,10 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(testCommands);
 
     Utility.updateCache();
+
+    const dotnetTestExplorer = new DotnetTestExplorer(context, testCommands, testResults, statusBar);
+    const codeLensProvider = new TestStatusCodeLensProvider(testCommands);
+
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e: vscode.ConfigurationChangeEvent) => {
 
         if (e.affectsConfiguration("dotnet-test-explorer.testProjectPath")) {
@@ -47,16 +47,19 @@ export function activate(context: vscode.ExtensionContext) {
             testCommands.discoverTests();
         }
 
+        if (e.affectsConfiguration("dotnet-test-explorer.showTestDuration")) {
+            dotnetTestExplorer.redrawTestExplorer();
+            codeLensProvider.redrawCodeLens();
+        }
+
         Utility.updateCache();
     }));
 
-    const dotnetTestExplorer = new DotnetTestExplorer(context, testCommands, testResults, statusBar);
     vscode.window.registerTreeDataProvider("dotnetTestExplorer", dotnetTestExplorer);
     AppInsightsClient.sendEvent("loadExtension");
 
     testCommands.discoverTests();
 
-    const codeLensProvider = new TestStatusCodeLensProvider(testCommands);
     context.subscriptions.push(codeLensProvider);
     context.subscriptions.push(vscode.languages.registerCodeLensProvider(
         { language: "csharp", scheme: "file" },

@@ -33,6 +33,7 @@ export class TestCommands implements Disposable {
     private testResultsFolder: string;
     private testResultsFolderWatcher: any;
     private waitForAllTests: IWaitForAllTests;
+    private testDiscoveryRunning = false;
 
     constructor(
         private resultsFile: TestResultsFile,
@@ -50,6 +51,13 @@ export class TestCommands implements Disposable {
     }
 
     public discoverTests() {
+        if (this.testDiscoveryRunning) {
+            Logger.Log("Test discovery already running");
+            return;
+        }
+
+        this.testDiscoveryRunning = true;
+
         this.onTestDiscoveryStartedEmitter.fire();
 
         this.testDirectories.clearTestsForDirectory();
@@ -94,6 +102,8 @@ export class TestCommands implements Disposable {
                 this.onTestDiscoveryFinishedEmitter.fire(discoveredTests);
             } catch (error) {
                 this.onTestDiscoveryFinishedEmitter.fire([]);
+            } finally {
+                this.testDiscoveryRunning = false;
             }
         };
 

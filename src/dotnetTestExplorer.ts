@@ -48,6 +48,10 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
         AppInsightsClient.sendEvent("refreshTestExplorer");
     }
 
+    public redrawTestExplorer(): void {
+        this._onDidChangeTreeData.fire();
+    }
+
     public getTreeItem(element: TestNode): TreeItem {
         if (element.isError) {
             return new TreeItem(element.name);

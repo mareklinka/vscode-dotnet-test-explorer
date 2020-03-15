@@ -242,6 +242,11 @@
           "type": "boolean",
           "default": false,
           "description": "If true, will discover/build and run test in parallel if you have multiple test projects"
+        },
+        "dotnet-test-explorer.showTestDuration": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, displays test duration in both the test list and code lens"
         }
       }
     },
