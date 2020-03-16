@@ -111,6 +111,10 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.window.onDidCloseTerminal((closedTerminal: vscode.Terminal) => {
         Executor.onDidCloseTerminal(closedTerminal);
     }));
+
+    context.subscriptions.push(vscode.commands.registerCommand("dotnet-test-explorer.openPanel", () => {
+        vscode.commands.executeCommand("workbench.view.extension.test");
+    }));
 }
 
 export function deactivate() {
