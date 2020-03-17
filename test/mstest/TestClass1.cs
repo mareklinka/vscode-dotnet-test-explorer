@@ -7,6 +7,16 @@ namespace MsTestTests { // Curly bracket on same line as namespace for testing n
     [TestClass]
     public class TestClass1
     {
+        [TestClass]
+        public class Nested
+        {
+            [TestMethod]
+            public void PassX()
+            {
+                (1 + 1).ShouldBe(2);
+            }
+        }
+
         [TestMethod]
         public void Pass()
         {
@@ -17,7 +27,7 @@ namespace MsTestTests { // Curly bracket on same line as namespace for testing n
         public void AnotherPass()
         {
             (1 + 1).ShouldBe(2);
-            
+
         }
 
         [TestMethod()]
@@ -25,7 +35,7 @@ namespace MsTestTests { // Curly bracket on same line as namespace for testing n
         {
             (1 + 1).ShouldBe(22);
         }
-        
+
         [TestMethod]
         [DataRow("First")]
         [DataRow("Second")]

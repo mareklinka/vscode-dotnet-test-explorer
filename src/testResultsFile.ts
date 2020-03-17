@@ -1,6 +1,6 @@
 "use strict";
 import * as fs from "fs";
-import { Disposable } from "vscode";
+import * as moment from "moment";
 import { DOMParser, Element, Node } from "xmldom";
 import { TestResult } from "./testResult";
 
@@ -33,12 +33,16 @@ function parseUnitTestResults(xml: Element): TestResult[] {
 
     // TSLint wants to use for-of here, but nodes doesn't support it
     for (let i = 0; i < nodes.length; i++) { // tslint:disable-line
+        let duration = getAttributeValue(nodes[i], "duration");
+        const parsed = moment.duration(duration);
+        duration = parsed.isValid() ? moment.utc(moment.duration(duration).asMilliseconds()).format("mm:ss.SSS") : undefined;
 
         results.push(new TestResult(
             getAttributeValue(nodes[i], "testId"),
             getAttributeValue(nodes[i], "outcome"),
             getTextContentForTag(nodes[i], "Message"),
             getTextContentForTag(nodes[i], "StackTrace"),
+            duration,
         ));
     }
 

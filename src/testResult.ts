@@ -7,7 +7,7 @@ export class TestResult {
     private className: string;
     private method: string;
 
-    public constructor(private _testId: string, private _outcome: string, private _message: string, private _stackTrace: string) {
+    public constructor(private _testId: string, private _outcome: string, private _message: string, private _stackTrace: string, private _duration?: string) {
     }
 
     public get fullName(): string {
@@ -28,6 +28,10 @@ export class TestResult {
 
     public get stackTrace(): string {
         return this._stackTrace;
+    }
+
+    public get duration(): string {
+        return this._duration;
     }
 
     public matches(className: string, method: string): boolean {
