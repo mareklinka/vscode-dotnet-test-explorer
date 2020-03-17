@@ -75,6 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand("dotnet-test-explorer.refreshTestExplorer", () => {
+        testDirectories.parseTestDirectories();
         dotnetTestExplorer.refreshTestExplorer();
     }));
 
