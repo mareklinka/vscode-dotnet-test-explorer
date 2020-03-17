@@ -94,7 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand("dotnet-test-explorer.debugTest", (test: TestNode) => {
-        testCommands.debugTestByName(test.fqn, true);
+        testCommands.debugTestByName(test.fqn, test.isFolder ? false : true);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand("dotnet-test-explorer.rerunLastCommand", (test: TestNode) => {

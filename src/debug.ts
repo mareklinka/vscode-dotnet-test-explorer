@@ -32,7 +32,7 @@ export class Debug {
             }
         }
 
-        if (debugRunnerInfo.waitingForAttach && debugRunnerInfo.processId.length > 0) {
+        if (debugRunnerInfo.processId.length > 0) {
             debugRunnerInfo.config = {
                 name: "NET TestExplorer Core Attach",
                 type: "coreclr",

@@ -1,4 +1,3 @@
-import * as chokidar from "chokidar";
 import * as fs from "fs";
 import * as path from "path";
 import { commands, Disposable, Event, EventEmitter } from "vscode";
@@ -15,9 +14,9 @@ import { Utility } from "./utility";
 export interface IWaitForAllTests {
     numberOfTestDirectories: number;
     currentNumberOfFiles: number;
-    expectedNumberOfFiles: number;
     testResults: TestResult[];
     clearPreviousTestResults: boolean;
+    testsAlreadyRunning: boolean;
 }
 
 export interface ITestRunContext {
@@ -37,7 +36,9 @@ export class TestCommands implements Disposable {
 
     constructor(
         private resultsFile: TestResultsFile,
-        private testDirectories: TestDirectories) { }
+        private testDirectories: TestDirectories) {
+            Executor.onTestProcessFinished(this.sendTestResults, this);
+         }
 
     public dispose(): void {
         try {
@@ -57,7 +58,7 @@ export class TestCommands implements Disposable {
 
         this.waitForAllTests = {
             currentNumberOfFiles: 0,
-            expectedNumberOfFiles: 0,
+            testsAlreadyRunning: false,
             testResults: [],
             clearPreviousTestResults: false,
             numberOfTestDirectories: testDirectories.length,
@@ -164,41 +165,49 @@ export class TestCommands implements Disposable {
         }
     }
 
+    private sendTestResults() {
+        fs.readdir(this.testResultsFolder, (err, files) => {
+            if (!err) {
+                const fileParsers: Array<Promise<void>> = [];
+
+                for (const i in files) {
+                    if (path.extname(files[i]) === ".trx") {
+                        const p = this.resultsFile.parseResults(path.join(this.testResultsFolder, files[i]))
+                        .then((testResults) => {
+                            this.waitForAllTests.testResults = this.waitForAllTests.testResults.concat(testResults);
+                            this.waitForAllTests.currentNumberOfFiles++;
+                            Logger.Log(`Parsed ${this.waitForAllTests.currentNumberOfFiles} file(s)`);
+                        });
+
+                        fileParsers.push(p);
+                    }
+                }
+
+                Promise.all(fileParsers).then((_) => {
+                    Logger.Log(`Parsed all expected test results, updating tree`);
+
+                    this.sendNewTestResults({clearPreviousTestResults: this.waitForAllTests.clearPreviousTestResults, testResults: this.waitForAllTests.testResults});
+
+                    this.waitForAllTests.currentNumberOfFiles = 0;
+                    this.waitForAllTests.testsAlreadyRunning = false;
+                    this.waitForAllTests.testResults = [];
+                    this.waitForAllTests.clearPreviousTestResults = false;
+                });
+            } else {
+                Logger.Log(`Reading test result files failed with error: ${err}`);
+            }
+        });
+    }
+
     private setupTestResultFolder(): void {
         if (!this.testResultsFolder) {
-            const me = this;
-
             this.testResultsFolder = fs.mkdtempSync(path.join(Utility.pathForResultFile, "test-explorer-"));
-            this.testResultsFolderWatcher = chokidar.watch("*.trx", { cwd: this.testResultsFolder}).on("add", (p) => {
-
-                Logger.Log("New test results file");
-
-                me.resultsFile.parseResults(path.join(me.testResultsFolder, p))
-                .then( (testResults) => {
-                    me.waitForAllTests.currentNumberOfFiles = me.waitForAllTests.currentNumberOfFiles + 1;
-                    me.waitForAllTests.testResults = me.waitForAllTests.testResults.concat(testResults);
-
-                    Logger.Log(`Parsed ${me.waitForAllTests.currentNumberOfFiles}/${me.waitForAllTests.expectedNumberOfFiles} file(s)`);
-
-                    if ((me.waitForAllTests.numberOfTestDirectories === 1) || (me.waitForAllTests.currentNumberOfFiles >= me.waitForAllTests.expectedNumberOfFiles)) {
-
-                        Logger.Log(`Parsed all expected test results, updating tree`);
-
-                        me.sendNewTestResults({clearPreviousTestResults: me.waitForAllTests.clearPreviousTestResults, testResults: me.waitForAllTests.testResults});
-
-                        this.waitForAllTests.currentNumberOfFiles = 0;
-                        this.waitForAllTests.expectedNumberOfFiles =  0;
-                        this.waitForAllTests.testResults = [];
-                        this.waitForAllTests.clearPreviousTestResults = false;
-                    }
-                });
-            });
         }
     }
 
     private runTestCommand(testName: string, isSingleTest: boolean, debug?: boolean): void {
 
-        if (this.waitForAllTests.expectedNumberOfFiles > 0) {
+        if (this.waitForAllTests.testsAlreadyRunning) {
             Logger.Log("Tests already running, ignore request to run tests for " + testName);
             return;
         }
@@ -214,14 +223,13 @@ export class TestCommands implements Disposable {
             return;
         }
 
+        this.waitForAllTests.testsAlreadyRunning = true;
+
         if (testName === "") {
-            this.waitForAllTests.expectedNumberOfFiles = this.waitForAllTests.numberOfTestDirectories;
             this.waitForAllTests.clearPreviousTestResults = true;
-        } else {
-            this.waitForAllTests.expectedNumberOfFiles = 1;
         }
 
-        Logger.Log(`Test run for ${testName}, expecting ${this.waitForAllTests.expectedNumberOfFiles} test results file(s) in total`) ;
+        Logger.Log(`Test run for ${testName}`) ;
 
         for (const {} of testDirectories) {
             const testContext = {testName, isSingleTest};
@@ -268,12 +276,8 @@ export class TestCommands implements Disposable {
     }
 
     private runTestCommandForSpecificDirectory(testDirectoryPath: string, testName: string, isSingleTest: boolean, index: number, debug?: boolean): Promise<any[]> {
-
-        const trxTestName = index + ".trx";
-
         return new Promise((resolve, reject) => {
-            const testResultFile = path.join(this.testResultsFolder, trxTestName);
-            let command = `dotnet test${Utility.additionalArgumentsOption} --no-build --logger \"trx;LogFileName=${testResultFile}\"`;
+            let command = `dotnet test${Utility.additionalArgumentsOption} --no-build --logger \"trx\" --results-directory \"${this.testResultsFolder}\"`;
 
             if (testName && testName.length) {
                 if (isSingleTest) {

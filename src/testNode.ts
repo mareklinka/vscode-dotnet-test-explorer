@@ -11,8 +11,7 @@ export class TestNode {
         this.setIcon(testResults);
 
         this._fqn = Utility
-            .getFqnTestName(this.fullName)
-            .replace("+", "."); // nested classes are reported as ParentClass+ChildClass;
+            .getFqnTestName(this.fullName); // nested classes are reported as ParentClass+ChildClass;
     }
 
     public get name(): string {
