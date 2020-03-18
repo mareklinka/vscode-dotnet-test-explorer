@@ -14,7 +14,7 @@
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "npm"
+            "preLaunchTask": "build"
         },
         {
             "name": "Launch Extension (nunit)",
@@ -28,7 +28,7 @@
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "npm"
+            "preLaunchTask": "build"
         },
         {
             "name": "Launch Extension (mstest)",
@@ -42,7 +42,7 @@
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "npm"
+            "preLaunchTask": "build"
         },
         {
             "name": "Launch Extension (fsharp xunit)",
@@ -56,7 +56,7 @@
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "npm"
+            "preLaunchTask": "build"
         },
         {
             "name": "Launch Extension (multiple tests)",
@@ -70,7 +70,7 @@
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "npm"
+            "preLaunchTask": "build"
         },
         {
             "name": "Launch Extension (multiple workspaces)",
@@ -88,7 +88,7 @@
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "npm"
+            "preLaunchTask": "build"
         },
         {
             "name": "Launch Tests",
@@ -103,7 +103,7 @@
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "npm"
+            "preLaunchTask": "build"
         },
         {
             "name": "Launch Extension (VEA)",
@@ -117,7 +117,19 @@
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "npm"
-        }
+            "preLaunchTask": "build"
+        },
+        {
+            "name": "Extension Tests",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+              "--extensionDevelopmentPath=${workspaceFolder}",
+              "--extensionTestsPath=${workspaceFolder}/out/test"
+            ],
+            "outFiles": ["${workspaceFolder}/out/test/**/*.js"],
+            "preLaunchTask": "npm: test"
+          }
     ]
 }
