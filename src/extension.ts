@@ -20,7 +20,7 @@ import { Utility } from "./utility";
 export function activate(context: vscode.ExtensionContext) {
     const testResults = new TestResultsFile();
     const testDirectories = new TestDirectories();
-    const testCommands = new TestCommands(testResults, testDirectories);
+    const testCommands = new TestCommands(context, testResults, testDirectories);
     const gotoTest = new GotoTest();
     const findTestInContext = new FindTestInContext();
     const problems = new Problems(testCommands);
@@ -85,6 +85,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand("dotnet-test-explorer.runTest", (test: TestNode) => {
         testCommands.runTest(test);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand("dotnet-test-explorer.coverTest", (test: TestNode) => {
+        testCommands.coverTest(test);
     }));
 
     context.subscriptions.push(vscode.commands.registerTextEditorCommand("dotnet-test-explorer.runTestInContext", (editor: vscode.TextEditor) => {

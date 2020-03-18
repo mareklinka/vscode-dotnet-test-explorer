@@ -98,11 +98,15 @@
       },
       {
         "command": "dotnet-test-explorer.debugTest",
-        "title": "Debug Test"
+        "title": "Debug Test(s)"
       },
       {
         "command": "dotnet-test-explorer.openPanel",
         "title": "Open Tests Panel"
+      },
+      {
+        "command": "dotnet-test-explorer.coverTest",
+        "title": "Cover Test(s)"
       }
     ],
     "menus": {
@@ -148,6 +152,11 @@
           "command": "dotnet-test-explorer.debugTest",
           "when": "view == dotnetTestExplorer",
           "group": "dotnetTestExplorer@2"
+        },
+        {
+          "command": "dotnet-test-explorer.coverTest",
+          "when": "view == dotnetTestExplorer",
+          "group": "dotnetTestExplorer@3"
         }
       ],
       "editor/context": [
@@ -251,6 +260,11 @@
           "type": "boolean",
           "default": false,
           "description": "If true, displays test duration in both the test list and code lens"
+        },
+        "dotnet-test-explorer.includeTestAssemblyCoverage": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, test coverage runs will include test assemblies in the coverage result"
         }
       }
     },
@@ -295,6 +309,7 @@
     "webpack-cli": "^3.3.11"
   },
   "dependencies": {
+    "@types/glob": "^7.1.1",
     "applicationinsights": "^1.0.5",
     "fkill": "^5.3.0",
     "glob": "^7.1.2",

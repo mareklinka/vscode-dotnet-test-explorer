@@ -1,6 +1,8 @@
 import * as fs from "fs";
+import * as glob from "glob"
 import * as path from "path";
-import { commands, Disposable, Event, EventEmitter } from "vscode";
+import { commands, Disposable, Event, EventEmitter, workspace } from "vscode";
+import * as vscode from "vscode";
 import { AppInsightsClient } from "./appInsightsClient";
 import { Executor } from "./executor";
 import { Logger } from "./logger";
@@ -22,6 +24,7 @@ export interface IWaitForAllTests {
 export interface ITestRunContext {
     testName: string;
     isSingleTest: boolean;
+    collectCoverage: boolean;
 }
 
 export class TestCommands implements Disposable {
@@ -36,6 +39,7 @@ export class TestCommands implements Disposable {
     private testDiscoveryRunning = false;
 
     constructor(
+        private context: vscode.ExtensionContext,
         private resultsFile: TestResultsFile,
         private testDirectories: TestDirectories) {
             Executor.onTestProcessFinished(this.sendTestResults, this);
@@ -75,7 +79,6 @@ export class TestCommands implements Disposable {
         this.setupTestResultFolder();
 
         const runSeqOrAsync = async () => {
-
             const addToDiscoveredTests = (discoverdTestResult: IDiscoverTestsResult, dir: string) => {
                 if (discoverdTestResult.testNames.length <= 0) {
                     this.testDirectories.removeTestDirectory(dir);
@@ -145,12 +148,12 @@ export class TestCommands implements Disposable {
     }
 
     public watchRunningTests(namespace: string): void {
-        const textContext = {testName: namespace, isSingleTest: false};
+        const textContext = {testName: namespace, isSingleTest: false, collectCoverage: false};
         this.sendRunningTest(textContext);
     }
 
     public runAllTests(): void {
-        this.runTestCommand("", false);
+        this.runTestCommand("", false, false);
         AppInsightsClient.sendEvent("runAllTests");
     }
 
@@ -158,9 +161,17 @@ export class TestCommands implements Disposable {
         this.runTestByName(test.fqn, !test.isFolder);
     }
 
+    public coverTest(test: TestNode): void {
+        this.coverTestByName(test.fqn, !test.isFolder);
+    }
+
     public runTestByName(testName: string, isSingleTest: boolean): void {
-        this.runTestCommand(testName, isSingleTest);
+        this.runTestCommand(testName, isSingleTest, false);
         AppInsightsClient.sendEvent("runTest");
+    }
+
+    public coverTestByName(testName: string, isSingleTest: boolean): void {
+        this.runTestCommand(testName, isSingleTest, true);
     }
 
     public debugTestByName(testName: string, isSingleTest: boolean): void {
@@ -170,7 +181,7 @@ export class TestCommands implements Disposable {
 
     public rerunLastCommand(): void {
         if (this.lastRunTestContext != null) {
-            this.runTestCommand(this.lastRunTestContext.testName, this.lastRunTestContext.isSingleTest);
+            this.runTestCommand(this.lastRunTestContext.testName, this.lastRunTestContext.isSingleTest, this.lastRunTestContext.collectCoverage);
             AppInsightsClient.sendEvent("rerunLastCommand");
         }
     }
@@ -207,6 +218,20 @@ export class TestCommands implements Disposable {
                 Logger.Log(`Reading test result files failed with error: ${err}`);
             }
         });
+
+        const coverageFiles = glob.sync(this.testResultsFolder.replace("\\", "/") + "/*/coverage.info");
+
+        if (coverageFiles.length > 0) {
+            fs.copyFile(coverageFiles[0], vscode.workspace.workspaceFolders[0].uri.fsPath + "/lcov.info", (err) => {
+                if (!err) {
+                    fs.unlinkSync(coverageFiles[0]);
+                } else {
+                    Logger.LogWarning("Coverage file could not be copied to workspace");
+                }
+            });
+        } else {
+            Logger.Log("No coverage files found");
+        }
     }
 
     private setupTestResultFolder(): void {
@@ -215,8 +240,7 @@ export class TestCommands implements Disposable {
         }
     }
 
-    private runTestCommand(testName: string, isSingleTest: boolean, debug?: boolean): void {
-
+    private runTestCommand(testName: string, isSingleTest: boolean, collectCoverage: boolean, debug?: boolean): void {
         if (this.waitForAllTests.testsAlreadyRunning) {
             Logger.Log("Tests already running, ignore request to run tests for " + testName);
             return;
@@ -242,7 +266,7 @@ export class TestCommands implements Disposable {
         Logger.Log(`Test run for ${testName}`) ;
 
         for (const {} of testDirectories) {
-            const testContext = {testName, isSingleTest};
+            const testContext = {testName, isSingleTest, collectCoverage};
             this.lastRunTestContext = testContext;
             this.sendRunningTest(testContext);
         }
@@ -251,10 +275,10 @@ export class TestCommands implements Disposable {
 
             try {
                 if (Utility.runInParallel) {
-                    await Promise.all(testDirectories.map( async (dir, i) => this.runTestCommandForSpecificDirectory(dir, testName, isSingleTest, i, debug)));
+                    await Promise.all(testDirectories.map( async (dir, i) => this.runTestCommandForSpecificDirectory(dir, testName, isSingleTest, collectCoverage, debug)));
                 } else {
                     for (let i = 0; i < testDirectories.length; i++) {
-                        await this.runTestCommandForSpecificDirectory(testDirectories[i], testName, isSingleTest, i, debug);
+                        await this.runTestCommandForSpecificDirectory(testDirectories[i], testName, isSingleTest, collectCoverage, debug);
                     }
                 }
             } catch (err) {
@@ -285,7 +309,7 @@ export class TestCommands implements Disposable {
         });
     }
 
-    private runTestCommandForSpecificDirectory(testDirectoryPath: string, testName: string, isSingleTest: boolean, index: number, debug?: boolean): Promise<any[]> {
+    private runTestCommandForSpecificDirectory(testDirectoryPath: string, testName: string, isSingleTest: boolean, collectCoverage: boolean, debug?: boolean): Promise<any[]> {
         return new Promise((resolve, reject) => {
             let command = `dotnet test${Utility.additionalArgumentsOption} --no-build --logger \"trx\" --results-directory \"${this.testResultsFolder}\"`;
 
@@ -295,6 +319,16 @@ export class TestCommands implements Disposable {
                 } else {
                     command = command + ` --filter "FullyQualifiedName~${testName.replace(/\(.*\)/g, "")}"`;
                 }
+            }
+
+            if (collectCoverage) {
+                const rsTemplatePath = this.context.asAbsolutePath(path.join("resources", "coverlet.runsettings"));
+                const includeTestsInCoverage = Utility.getConfiguration().get<boolean>("includeTestAssemblyCoverage").toString();
+                const content = fs.readFileSync(rsTemplatePath, "utf8").replace("INCLUDE_TESTS_TOKEN", includeTestsInCoverage);
+                const runsettingsPath = path.join(this.testResultsFolder, "coverlet.runsettings");
+                fs.writeFileSync(runsettingsPath, content);
+
+                command = command + " --collect:\"XPlat Code Coverage\" --settings " + runsettingsPath;
             }
 
             this.runBuildCommandForSpecificDirectory(testDirectoryPath)
