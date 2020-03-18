@@ -219,19 +219,44 @@ export class TestCommands implements Disposable {
             }
         });
 
-        const coverageFiles = glob.sync(this.testResultsFolder.replace("\\", "/") + "/*/coverage.info");
+        const pattern = this.testResultsFolder.replace("\\", "/") + "/*/coverage.info";
+        glob(pattern, (err, coverageFiles) => {
+            if (err) {
+                Logger.LogError("Unable to retrieve coverage result files", err);
+                return;
+            }
 
-        if (coverageFiles.length > 0) {
-            fs.copyFile(coverageFiles[0], vscode.workspace.workspaceFolders[0].uri.fsPath + "/lcov.info", (err) => {
-                if (!err) {
-                    fs.unlinkSync(coverageFiles[0]);
-                } else {
-                    Logger.LogWarning("Coverage file could not be copied to workspace");
+            let latestCoverageFile: string;
+
+            if (coverageFiles.length === 1) {
+                latestCoverageFile = coverageFiles[0];
+            } else if (coverageFiles.length > 1) {
+                let latestTimestamp = fs.statSync(coverageFiles[0]).mtime;
+                latestCoverageFile = coverageFiles[0];
+
+                for (let i = 1; i < coverageFiles.length; ++i) {
+                    const timestamp = fs.statSync(coverageFiles[i]).mtime;
+
+                    if (timestamp > latestTimestamp) {
+                        latestTimestamp = timestamp;
+                        latestCoverageFile = coverageFiles[i];
+                    }
                 }
-            });
-        } else {
-            Logger.Log("No coverage files found");
-        }
+            }
+
+            if (latestCoverageFile) {
+                fs.copyFile(latestCoverageFile, vscode.workspace.workspaceFolders[0].uri.fsPath + "/lcov.info", (err) => {
+                    if (!err) {
+                        // drop all coverage files
+                        for (let i = 0; i < coverageFiles.length; ++i) {
+                            fs.unlinkSync(coverageFiles[i]);
+                        }
+                    } else {
+                        Logger.LogWarning("Coverage file could not be copied to workspace");
+                    }
+                });
+            }
+        });
     }
 
     private setupTestResultFolder(): void {
