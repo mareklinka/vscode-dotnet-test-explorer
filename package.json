@@ -265,6 +265,11 @@
           "type": "boolean",
           "default": false,
           "description": "If true, test coverage runs will include test assemblies in the coverage result"
+        },
+        "dotnet-test-explorer.coverageFilePath": {
+          "type": "string",
+          "default": "",
+          "description": "A workspace-relative path where the coverage result files should be placed (must be a directory)"
         }
       }
     },

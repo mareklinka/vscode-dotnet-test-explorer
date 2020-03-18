@@ -245,7 +245,18 @@ export class TestCommands implements Disposable {
             }
 
             if (latestCoverageFile) {
-                fs.copyFile(latestCoverageFile, vscode.workspace.workspaceFolders[0].uri.fsPath + "/lcov.info", (err) => {
+                const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+                const relativePath = Utility.getConfiguration().get<string>("coverageFilePath");
+                let targetPath = workspaceRoot;
+
+                if (relativePath) {
+                    this.ensureDirExists(workspaceRoot, relativePath);
+                    targetPath = path.join(workspaceRoot, relativePath);
+                }
+
+                targetPath = path.join(targetPath, "lcov.info");
+
+                fs.copyFile(latestCoverageFile, targetPath, (err) => {
                     if (!err) {
                         // drop all coverage files
                         for (let i = 0; i < coverageFiles.length; ++i) {
@@ -392,4 +403,35 @@ export class TestCommands implements Disposable {
                 });
         });
     }
+
+    private ensureDirExists(rootDir, targetDir) {
+        const sep = path.sep;
+        const initDir = path.isAbsolute(targetDir) ? sep : '';
+        const baseDir = rootDir;
+
+        targetDir = path.normalize(targetDir);
+
+        return targetDir.split(sep).reduce((parentDir, childDir) => {
+          const curDir = path.resolve(baseDir, parentDir, childDir);
+          try {
+            fs.mkdirSync(curDir);
+          } catch (err) {
+            if (err.code === 'EEXIST') { // curDir already exists!
+              return curDir;
+            }
+
+            // To avoid `EISDIR` error on Mac and `EACCES`-->`ENOENT` and `EPERM` on Windows.
+            if (err.code === 'ENOENT') { // Throw the original parentDir error on curDir `ENOENT` failure.
+              throw new Error(`EACCES: permission denied, mkdir '${parentDir}'`);
+            }
+
+            const caughtErr = ['EACCES', 'EPERM', 'EISDIR'].indexOf(err.code) > -1;
+            if (!caughtErr || caughtErr && curDir === path.resolve(targetDir)) {
+              throw err; // Throw if it's just the last created dir.
+            }
+          }
+
+          return curDir;
+        }, initDir);
+      }
 }
