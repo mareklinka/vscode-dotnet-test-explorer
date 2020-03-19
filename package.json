@@ -3,7 +3,7 @@
   "displayName": ".NET Core Test Explorer",
   "description": "Test Explorer for .NET Core (MSTest, xUnit, NUnit)",
   "version": "0.8.1-lima",
-  "publisher": "formulahendry",
+  "publisher": "mareklinka",
   "license": "MIT",
   "icon": "testexplorer_dark.png",
   "engines": {
@@ -85,10 +85,6 @@
         }
       },
       {
-        "command": "dotnet-test-explorer.runTestInContext",
-        "title": "Run .NET Core Test in context"
-      },
-      {
         "command": "dotnet-test-explorer.gotoTest",
         "title": "Go to Test",
         "icon": {
@@ -157,23 +153,6 @@
           "command": "dotnet-test-explorer.coverTest",
           "when": "view == dotnetTestExplorer",
           "group": "dotnetTestExplorer@3"
-        }
-      ],
-      "editor/context": [
-        {
-          "command": "dotnet-test-explorer.runTestInContext",
-          "group": "dotnetTestExplorer@0",
-          "when": "resourceLangId == csharp"
-        },
-        {
-          "command": "dotnet-test-explorer.runTestInContext",
-          "group": "dotnetTestExplorer@0",
-          "when": "resourceLangId == fsharp"
-        },
-        {
-          "command": "dotnet-test-explorer.runTestInContext",
-          "group": "dotnetTestExplorer@0",
-          "when": "resourceLangId == vb"
         }
       ]
     },
@@ -274,12 +253,6 @@
       }
     },
     "keybindings": [
-      {
-        "command": "dotnet-test-explorer.runTestInContext",
-        "key": "alt+r alt+c",
-        "mac": "alt+r alt+c",
-        "when": "editorTextFocus"
-      },
       {
         "command": "dotnet-test-explorer.rerunLastCommand",
         "key": "alt+r alt+r",

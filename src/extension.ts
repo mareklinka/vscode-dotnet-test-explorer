@@ -4,7 +4,6 @@ import * as vscode from "vscode";
 import { AppInsightsClient } from "./appInsightsClient";
 import { DotnetTestExplorer } from "./dotnetTestExplorer";
 import { Executor } from "./executor";
-import { FindTestInContext } from "./findTestInContext";
 import { GotoTest } from "./gotoTest";
 import { LeftClickTest } from "./leftClickTest";
 import { Logger } from "./logger";
@@ -22,7 +21,6 @@ export function activate(context: vscode.ExtensionContext) {
     const testDirectories = new TestDirectories();
     const testCommands = new TestCommands(context, testResults, testDirectories);
     const gotoTest = new GotoTest();
-    const findTestInContext = new FindTestInContext();
     const problems = new Problems(testCommands);
     const statusBar = new StatusBar(testCommands);
     const leftClickTest = new LeftClickTest();
@@ -91,18 +89,12 @@ export function activate(context: vscode.ExtensionContext) {
         testCommands.coverTest(test);
     }));
 
-    context.subscriptions.push(vscode.commands.registerTextEditorCommand("dotnet-test-explorer.runTestInContext", (editor: vscode.TextEditor) => {
-        findTestInContext.find(editor.document, editor.selection.start).then( (testRunContext) => {
-            testCommands.runTestByName(testRunContext.testName, testRunContext.isSingleTest);
-        });
-    }));
-
     context.subscriptions.push(vscode.commands.registerCommand("dotnet-test-explorer.gotoTest", (test: TestNode) => {
         gotoTest.go(test);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand("dotnet-test-explorer.debugTest", (test: TestNode) => {
-        testCommands.debugTestByName(test.fqn, test.isFolder ? false : true);
+        testCommands.debugTestByName(test.fqn, !test.isFolder);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand("dotnet-test-explorer.rerunLastCommand", (test: TestNode) => {

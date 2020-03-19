@@ -19,7 +19,7 @@ function findChildElement(node: Node, name: string): Node {
 
 function getAttributeValue(node: Node, name: string): string {
     const attribute = node.attributes.getNamedItem(name);
-    return (attribute === null) ? null : attribute.nodeValue;
+    return attribute ? attribute.nodeValue : null;
 }
 
 function getTextContentForTag(parentNode: Node, tagName: string): string {
