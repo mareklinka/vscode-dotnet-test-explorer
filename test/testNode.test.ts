@@ -35,7 +35,7 @@ suite("Icon tests", () => {
             GetTestResult("2", "NotExecuted", "NameSpace.MyClass", "NameSpace.MyClass.Test2"),
             GetTestResult("3", "Passed", "NameSpace.MyClass", "NameSpace.MyClass.Test3"),
         ];
-        const node = new TestNode("NameSpace.Myclass", "MyClass", undefined, testResult, [new TestNode("parent.child", "child", undefined, null)]);
+        const node = new TestNode("NameSpace.MyClass", "MyClass", undefined, testResult, [new TestNode("parent.child", "child", undefined, null)]);
 
         assert.equal(node.icon, "namespaceNotExecuted.png");
     });
