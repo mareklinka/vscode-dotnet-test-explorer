@@ -1,11 +1,8 @@
 import * as path from "path";
-import * as vscode from "vscode";
-import { AppInsightsClient } from "./appInsightsClient";
 import { Executor } from "./executor";
 import { Logger } from "./logger";
 import { TestCommands } from "./testCommands";
 import { TestDirectories } from "./testDirectories";
-import { TestResultsFile } from "./testResultsFile";
 import { Utility } from "./utility";
 
 export class Watch {
@@ -40,7 +37,6 @@ export class Watch {
 
         const trxPath = path.join(this.testCommands.testResultFolder, `autoWatch${index}.trx`);
 
-        AppInsightsClient.sendEvent("runWatchCommand");
         const command = `dotnet watch test${Utility.additionalArgumentsOption} --logger "trx;LogFileName=${trxPath}"`;
 
         Logger.Log(`Executing ${command} in ${testDirectory}`);

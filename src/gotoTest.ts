@@ -1,16 +1,11 @@
 import * as vscode from "vscode";
-import { AppInsightsClient } from "./appInsightsClient";
 import { Logger } from "./logger";
 import { TestNode } from "./testNode";
-import { Utility } from "./utility";
 
 export class GotoTest {
 
     public go(test: TestNode): void {
-
-        AppInsightsClient.sendEvent("gotoTest");
-
-        const symbolInformation = vscode.commands.executeCommand<vscode.SymbolInformation[]>(
+        vscode.commands.executeCommand<vscode.SymbolInformation[]>(
             "vscode.executeWorkspaceSymbolProvider",
             test.fqn,
         ).then((symbols) => {
