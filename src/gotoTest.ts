@@ -1,56 +1,44 @@
 import * as vscode from "vscode";
 import { Logger } from "./logger";
+import { Symbols } from "./symbols";
 import { TestNode } from "./testNode";
 
 export class GotoTest {
 
-    public go(test: TestNode): void {
-        vscode.commands.executeCommand<vscode.SymbolInformation[]>(
+    public async go(test: TestNode): Promise<void> {
+        const symbols = await vscode.commands.executeCommand<vscode.SymbolInformation[]>(
             "vscode.executeWorkspaceSymbolProvider",
-            test.fqn,
-        ).then((symbols) => {
+            test.fqn.substr(test.fqn.lastIndexOf(".") + 1));
 
-            let symbol: vscode.SymbolInformation;
+        try {
+            const symbol = await this.findTestLocation(symbols, test);
 
-            try {
-                symbol = this.findTestLocation(symbols, test);
-
-                vscode.workspace.openTextDocument(symbol.location.uri).then((doc) => {
-                    vscode.window.showTextDocument(doc).then((editor) => {
-                        const loc = symbol.location.range;
-                        const selection = new vscode.Selection(loc.start.line, loc.start.character, loc.start.line, loc.end.character);
-                        vscode.window.activeTextEditor.selection = selection;
-                        vscode.window.activeTextEditor.revealRange(selection, vscode.TextEditorRevealType.InCenter);
-                    });
+            vscode.workspace.openTextDocument(symbol.uri).then((doc) => {
+                vscode.window.showTextDocument(doc).then((editor) => {
+                    const selection = new vscode.Selection(symbol.range.start.line, symbol.range.start.character, symbol.range.start.line, symbol.range.end.character);
+                    vscode.window.activeTextEditor.selection = selection;
+                    vscode.window.activeTextEditor.revealRange(selection, vscode.TextEditorRevealType.InCenter);
                 });
+            });
 
-            } catch (r) {
-                Logger.Log(r.message);
-                vscode.window.showWarningMessage(r.message);
-            }
-
-        });
+        } catch (r) {
+            Logger.Log(r.message);
+            vscode.window.showWarningMessage(r.message);
+        }
     }
 
-    public findTestLocation(symbols: vscode.SymbolInformation[], testNode: TestNode): vscode.SymbolInformation {
+    public async findTestLocation(symbols: vscode.SymbolInformation[], testNode: TestNode): Promise<ITestSymbolLocation> {
+        for (let i = 0; i < symbols.length; ++i) {
+            const docSymbols = await Symbols.getSymbols(symbols[i].location.uri, true);
 
-        if (symbols.length === 0) {
-            throw new Error("Could not find test (no symbols found)");
+            const candidate = docSymbols.find((ts) => this.isSymbolATestCandidate(symbols[i]) && ts.fullName === testNode.fqn);
+
+            if (candidate) {
+                return { range: candidate.documentSymbol.range, uri: symbols[i].location.uri};
+            }
         }
 
-        const testFqn = testNode.fqn;
-
-        symbols = symbols.filter((s) => this.isSymbolATestCandidate(s) && testFqn.endsWith(this.getTestMethodFqn(s.name)));
-
-        if (symbols.length === 0) {
-            throw Error("Could not find test (no symbols matching)");
-        }
-
-        if (symbols.length > 1) {
-            throw Error("Could not find test (found multiple matching symbols)");
-        }
-
-        return symbols[0];
+        throw new Error("Could not find test (no symbols found)");
     }
 
     public getTestMethodFqn(testName: string): string {
@@ -68,4 +56,9 @@ export class GotoTest {
     private isSymbolATestCandidate(s: vscode.SymbolInformation): boolean {
         return s.location.uri.toString().endsWith(".fs") ? s.kind === vscode.SymbolKind.Variable : s.kind === vscode.SymbolKind.Method;
     }
+}
+
+interface ITestSymbolLocation {
+    range: vscode.Range;
+    uri: vscode.Uri;
 }
