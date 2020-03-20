@@ -14,10 +14,10 @@ export class FindTestInContext {
             symbolCandidate = symbolsInRange.find( (s) => s.documentSymbol.kind === vscode.SymbolKind.Method);
 
             if (symbolCandidate) {
-                return {testName: (symbolCandidate.fullName), isSingleTest: true, collectCoverage: false};
+                return {testName: symbolCandidate.fullName, isSingleTest: true, collectCoverage: false};
             }
 
-            symbolCandidate = symbolsInRange.find( (s) => s.documentSymbol.kind === vscode.SymbolKind.Class);
+            symbolCandidate = symbolsInRange.reverse().find( (s) => s.documentSymbol.kind === vscode.SymbolKind.Class);
 
             if (symbolCandidate) {
                 return {testName: symbolCandidate.fullName, isSingleTest: false, collectCoverage: false};

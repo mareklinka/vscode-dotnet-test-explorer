@@ -22,7 +22,7 @@ export class Symbols {
                     flattenedSymbols.map( (s) => s.documentSymbol).forEach( (s) => s.name = s.name.replace(/\(.*\)/g, ""));
                 }
 
-                return flattenedSymbols;
+                return flattenedSymbols.map((s) => this.constructFqnForSymbol(s, flattenedSymbols));
             });
     }
 
@@ -54,5 +54,35 @@ export class Symbols {
         });
 
         return flattened;
+    }
+
+    private static constructFqnForSymbol(symbol: ITestSymbol, documentSymbols: ITestSymbol[]): ITestSymbol {
+        const isMethod = symbol.documentSymbol.kind === vscode.SymbolKind.Method;
+        const parts = symbol.fullName.split(".");
+
+        let isParentClass = documentSymbols.find((s) => s.fullName === parts[0]).documentSymbol.kind === vscode.SymbolKind.Class;
+        let fqnBuilder = parts[0];
+        let builder = parts[0];
+        const methodName = parts[parts.length - 1];
+
+        for (let i = 1; i < parts.length - (isMethod ? 1 : 0); ++i) {
+            if (isParentClass) {
+                fqnBuilder += `+${parts[i]}`;
+            } else {
+                fqnBuilder += `.${parts[i]}`;
+            }
+
+            builder += `.${parts[i]}`;
+
+            const nextSymbol = documentSymbols.find((s) => s.fullName === builder);
+
+            isParentClass = nextSymbol && nextSymbol.documentSymbol.kind === vscode.SymbolKind.Class;
+        }
+
+        if (isMethod) {
+            fqnBuilder += `.${methodName}`;
+        }
+
+        return {fullName: fqnBuilder, parentName: fqnBuilder.substr(0, fqnBuilder.lastIndexOf(".")), documentSymbol: symbol.documentSymbol};
     }
 }
