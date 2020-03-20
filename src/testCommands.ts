@@ -34,7 +34,6 @@ export class TestCommands implements Disposable {
     private onNewTestResultsEmitter = new EventEmitter<ITestResult>();
     private lastRunTestContext: ITestRunContext = null;
     private testResultsFolder: string;
-    private testResultsFolderWatcher: any;
     private waitForAllTests: IWaitForAllTests;
     private testDiscoveryRunning = false;
 
@@ -46,12 +45,11 @@ export class TestCommands implements Disposable {
          }
 
     public dispose(): void {
-        try {
-            if (this.testResultsFolderWatcher) {
-                this.testResultsFolderWatcher.close();
-            }
-        } catch (err) {
+        if (!this.testResultsFolder) {
+            return;
         }
+
+        this.clearTempDirectory(this.testResultsFolder);
     }
 
     public discoverTests() {
@@ -434,4 +432,19 @@ export class TestCommands implements Disposable {
           return curDir;
         }, initDir);
       }
+
+    private clearTempDirectory(dir: string) {
+        if (fs.existsSync(this.testResultsFolder)) {
+            fs.readdirSync(dir).forEach((child, _) => {
+                const curPath = path.join(dir, child);
+                if (fs.lstatSync(curPath).isDirectory()) { // recurse
+                    this.clearTempDirectory(curPath);
+                } else { // delete file
+                    fs.unlinkSync(curPath);
+                }
+            });
+
+            fs.rmdirSync(dir);
+        }
+    }
 }

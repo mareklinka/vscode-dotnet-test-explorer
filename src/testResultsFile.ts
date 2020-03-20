@@ -59,7 +59,7 @@ function updateUnitTestDefinitions(xml: Element, results: TestResult[]): void {
         if (testMethod) {
             names.set(id, {
                 className: getAttributeValue(testMethod, "className"),
-                method: getAttributeValue(testMethod, "name"),
+                method: getAttributeValue(nodes[i], "name"),
             });
         }
     }
