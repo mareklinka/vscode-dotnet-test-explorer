@@ -1,6 +1,8 @@
 import * as fs from "fs";
+import * as glob from "glob"
 import * as path from "path";
-import { commands, Disposable, Event, EventEmitter } from "vscode";
+import { commands, Disposable, Event, EventEmitter, workspace } from "vscode";
+import * as vscode from "vscode";
 import { AppInsightsClient } from "./appInsightsClient";
 import { Executor } from "./executor";
 import { Logger } from "./logger";
@@ -22,6 +24,7 @@ export interface IWaitForAllTests {
 export interface ITestRunContext {
     testName: string;
     isSingleTest: boolean;
+    collectCoverage: boolean;
 }
 
 export class TestCommands implements Disposable {
@@ -36,6 +39,7 @@ export class TestCommands implements Disposable {
     private testDiscoveryRunning = false;
 
     constructor(
+        private context: vscode.ExtensionContext,
         private resultsFile: TestResultsFile,
         private testDirectories: TestDirectories) {
             Executor.onTestProcessFinished(this.sendTestResults, this);
@@ -75,7 +79,6 @@ export class TestCommands implements Disposable {
         this.setupTestResultFolder();
 
         const runSeqOrAsync = async () => {
-
             const addToDiscoveredTests = (discoverdTestResult: IDiscoverTestsResult, dir: string) => {
                 if (discoverdTestResult.testNames.length <= 0) {
                     this.testDirectories.removeTestDirectory(dir);
@@ -145,12 +148,12 @@ export class TestCommands implements Disposable {
     }
 
     public watchRunningTests(namespace: string): void {
-        const textContext = {testName: namespace, isSingleTest: false};
+        const textContext = {testName: namespace, isSingleTest: false, collectCoverage: false};
         this.sendRunningTest(textContext);
     }
 
     public runAllTests(): void {
-        this.runTestCommand("", false);
+        this.runTestCommand("", false, false);
         AppInsightsClient.sendEvent("runAllTests");
     }
 
@@ -158,9 +161,17 @@ export class TestCommands implements Disposable {
         this.runTestByName(test.fqn, !test.isFolder);
     }
 
+    public coverTest(test: TestNode): void {
+        this.coverTestByName(test.fqn, !test.isFolder);
+    }
+
     public runTestByName(testName: string, isSingleTest: boolean): void {
-        this.runTestCommand(testName, isSingleTest);
+        this.runTestCommand(testName, isSingleTest, false);
         AppInsightsClient.sendEvent("runTest");
+    }
+
+    public coverTestByName(testName: string, isSingleTest: boolean): void {
+        this.runTestCommand(testName, isSingleTest, true);
     }
 
     public debugTestByName(testName: string, isSingleTest: boolean): void {
@@ -170,7 +181,7 @@ export class TestCommands implements Disposable {
 
     public rerunLastCommand(): void {
         if (this.lastRunTestContext != null) {
-            this.runTestCommand(this.lastRunTestContext.testName, this.lastRunTestContext.isSingleTest);
+            this.runTestCommand(this.lastRunTestContext.testName, this.lastRunTestContext.isSingleTest, this.lastRunTestContext.collectCoverage);
             AppInsightsClient.sendEvent("rerunLastCommand");
         }
     }
@@ -207,6 +218,56 @@ export class TestCommands implements Disposable {
                 Logger.Log(`Reading test result files failed with error: ${err}`);
             }
         });
+
+        const pattern = this.testResultsFolder.replace("\\", "/") + "/*/coverage.info";
+        glob(pattern, (err, coverageFiles) => {
+            if (err) {
+                Logger.LogError("Unable to retrieve coverage result files", err);
+                return;
+            }
+
+            let latestCoverageFile: string;
+
+            if (coverageFiles.length === 1) {
+                latestCoverageFile = coverageFiles[0];
+            } else if (coverageFiles.length > 1) {
+                let latestTimestamp = fs.statSync(coverageFiles[0]).mtime;
+                latestCoverageFile = coverageFiles[0];
+
+                for (let i = 1; i < coverageFiles.length; ++i) {
+                    const timestamp = fs.statSync(coverageFiles[i]).mtime;
+
+                    if (timestamp > latestTimestamp) {
+                        latestTimestamp = timestamp;
+                        latestCoverageFile = coverageFiles[i];
+                    }
+                }
+            }
+
+            if (latestCoverageFile) {
+                const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+                const relativePath = Utility.getConfiguration().get<string>("coverageFilePath");
+                let targetPath = workspaceRoot;
+
+                if (relativePath) {
+                    this.ensureDirExists(workspaceRoot, relativePath);
+                    targetPath = path.join(workspaceRoot, relativePath);
+                }
+
+                targetPath = path.join(targetPath, "lcov.info");
+
+                fs.copyFile(latestCoverageFile, targetPath, (err) => {
+                    if (!err) {
+                        // drop all coverage files
+                        for (let i = 0; i < coverageFiles.length; ++i) {
+                            fs.unlinkSync(coverageFiles[i]);
+                        }
+                    } else {
+                        Logger.LogWarning("Coverage file could not be copied to workspace");
+                    }
+                });
+            }
+        });
     }
 
     private setupTestResultFolder(): void {
@@ -215,8 +276,7 @@ export class TestCommands implements Disposable {
         }
     }
 
-    private runTestCommand(testName: string, isSingleTest: boolean, debug?: boolean): void {
-
+    private runTestCommand(testName: string, isSingleTest: boolean, collectCoverage: boolean, debug?: boolean): void {
         if (this.waitForAllTests.testsAlreadyRunning) {
             Logger.Log("Tests already running, ignore request to run tests for " + testName);
             return;
@@ -242,7 +302,7 @@ export class TestCommands implements Disposable {
         Logger.Log(`Test run for ${testName}`) ;
 
         for (const {} of testDirectories) {
-            const testContext = {testName, isSingleTest};
+            const testContext = {testName, isSingleTest, collectCoverage};
             this.lastRunTestContext = testContext;
             this.sendRunningTest(testContext);
         }
@@ -251,10 +311,10 @@ export class TestCommands implements Disposable {
 
             try {
                 if (Utility.runInParallel) {
-                    await Promise.all(testDirectories.map( async (dir, i) => this.runTestCommandForSpecificDirectory(dir, testName, isSingleTest, i, debug)));
+                    await Promise.all(testDirectories.map( async (dir, i) => this.runTestCommandForSpecificDirectory(dir, testName, isSingleTest, collectCoverage, debug)));
                 } else {
                     for (let i = 0; i < testDirectories.length; i++) {
-                        await this.runTestCommandForSpecificDirectory(testDirectories[i], testName, isSingleTest, i, debug);
+                        await this.runTestCommandForSpecificDirectory(testDirectories[i], testName, isSingleTest, collectCoverage, debug);
                     }
                 }
             } catch (err) {
@@ -285,7 +345,7 @@ export class TestCommands implements Disposable {
         });
     }
 
-    private runTestCommandForSpecificDirectory(testDirectoryPath: string, testName: string, isSingleTest: boolean, index: number, debug?: boolean): Promise<any[]> {
+    private runTestCommandForSpecificDirectory(testDirectoryPath: string, testName: string, isSingleTest: boolean, collectCoverage: boolean, debug?: boolean): Promise<any[]> {
         return new Promise((resolve, reject) => {
             let command = `dotnet test${Utility.additionalArgumentsOption} --no-build --logger \"trx\" --results-directory \"${this.testResultsFolder}\"`;
 
@@ -295,6 +355,16 @@ export class TestCommands implements Disposable {
                 } else {
                     command = command + ` --filter "FullyQualifiedName~${testName.replace(/\(.*\)/g, "")}"`;
                 }
+            }
+
+            if (collectCoverage) {
+                const rsTemplatePath = this.context.asAbsolutePath(path.join("resources", "coverlet.runsettings"));
+                const includeTestsInCoverage = Utility.getConfiguration().get<boolean>("includeTestAssemblyCoverage").toString();
+                const content = fs.readFileSync(rsTemplatePath, "utf8").replace("INCLUDE_TESTS_TOKEN", includeTestsInCoverage);
+                const runsettingsPath = path.join(this.testResultsFolder, "coverlet.runsettings");
+                fs.writeFileSync(runsettingsPath, content);
+
+                command = command + " --collect:\"XPlat Code Coverage\" --settings " + runsettingsPath;
             }
 
             this.runBuildCommandForSpecificDirectory(testDirectoryPath)
@@ -333,4 +403,35 @@ export class TestCommands implements Disposable {
                 });
         });
     }
+
+    private ensureDirExists(rootDir, targetDir) {
+        const sep = path.sep;
+        const initDir = path.isAbsolute(targetDir) ? sep : '';
+        const baseDir = rootDir;
+
+        targetDir = path.normalize(targetDir);
+
+        return targetDir.split(sep).reduce((parentDir, childDir) => {
+          const curDir = path.resolve(baseDir, parentDir, childDir);
+          try {
+            fs.mkdirSync(curDir);
+          } catch (err) {
+            if (err.code === 'EEXIST') { // curDir already exists!
+              return curDir;
+            }
+
+            // To avoid `EISDIR` error on Mac and `EACCES`-->`ENOENT` and `EPERM` on Windows.
+            if (err.code === 'ENOENT') { // Throw the original parentDir error on curDir `ENOENT` failure.
+              throw new Error(`EACCES: permission denied, mkdir '${parentDir}'`);
+            }
+
+            const caughtErr = ['EACCES', 'EPERM', 'EISDIR'].indexOf(err.code) > -1;
+            if (!caughtErr || caughtErr && curDir === path.resolve(targetDir)) {
+              throw err; // Throw if it's just the last created dir.
+            }
+          }
+
+          return curDir;
+        }, initDir);
+      }
 }
