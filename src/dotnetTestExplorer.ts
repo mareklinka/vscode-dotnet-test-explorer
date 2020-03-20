@@ -80,14 +80,14 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
         }
 
         if (!this.discoveredTests) {
-            const loadingNode = new TestNode("", "Discovering tests", ".", this.testResults);
+            const loadingNode = new TestNode("", "Discovering tests", undefined, this.testResults);
             loadingNode.setAsLoading();
             return [loadingNode];
         }
 
         if (this.discoveredTests.length === 0) {
             return ["Please open or set the test project", "and ensure your project compiles."].map((e) => {
-                const node = new TestNode("", e, ".", this.testResults);
+                const node = new TestNode("", e, undefined, this.testResults);
                 node.setAsError(e);
                 return node;
             });
@@ -97,7 +97,7 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
 
         if (!useTreeView) {
             return this.discoveredTests.map((name) => {
-                return new TestNode("", name, ".", this.testResults);
+                return new TestNode(`${name}`, name, undefined, this.testResults);
             });
         }
 
@@ -128,7 +128,7 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
 
             for (let i = 0; i < split.length; ++i) {
                 if (!c.nodes.has(split[i])) {
-                    c.nodes.set(split[i], { tests: [], nodes: new Map<string, ITreeNode>(), isNested: (i < split.length - 1) });
+                    c.nodes.set(split[i], { tests: [], nodes: new Map<string, ITreeNode>(), isNested: (i > 0) });
                 }
                 c = c.nodes.get(split[i]);
             }
@@ -139,23 +139,72 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
         }
     }
 
-    private createTestNode(parentPath: string, test: ITreeNode): TestNode[] {
+    private createTestNode(parentFqn: string, test: ITreeNode): TestNode[] {
         let testNodes: TestNode[];
 
         testNodes = Array.from(test.nodes.keys()).sort().map((key) => {
+            const fqn = parentFqn ? (test.nodes.get(key).isNested ? `${parentFqn}+${key}` : `${parentFqn}.${key}`) : key;
             return new TestNode(
-                parentPath,
+                fqn,
                 key,
-                test.isNested ? `+` : `.`,
+                undefined,
                 this.testResults,
                 this.createTestNode(
-                    (parentPath ? (test.isNested ? `${parentPath}+` : `${parentPath}.`) : "") + key,
-                     test.nodes.get(key)));
+                    fqn,
+                    test.nodes.get(key)));
         });
 
-        testNodes = testNodes.concat(test.tests.sort().map((t) => {
-            return new TestNode(parentPath, t, ".", this.testResults);
-        }));
+        const sorted = test.tests.sort();
+        const theoryMap = new Map<string, TestNode>();
+
+        for (let i = 0; i < test.tests.length; ++i) {
+            const t = sorted[i];
+            const openingParensIndex = t.indexOf("(");
+            const hasParams = openingParensIndex > 0 && t[t.length - 1] === ")";
+
+            if (hasParams) {
+                let methodName = t.substr(0, openingParensIndex);
+                let params: string;
+
+                if (methodName[methodName.length - 1] === " ") {
+                    // ms test separates method from parameters by a space
+                    methodName = methodName.trimRight();
+                    params = t.substr(openingParensIndex - 1);
+                } else {
+                    params = t.substr(openingParensIndex);
+                }
+
+                const fqn = `${parentFqn}.${methodName}`;
+
+                let theoryNode: TestNode;
+
+                if (theoryMap.has(methodName)) {
+                    theoryNode = theoryMap.get(methodName);
+                } else {
+                    theoryNode = new TestNode(
+                        fqn,
+                        methodName,
+                        undefined,
+                        this.testResults,
+                        [],
+                        true);
+                    theoryMap.set(methodName, theoryNode);
+                    testNodes.push(theoryNode);
+                }
+
+                const method = new TestNode(fqn, t, params, this.testResults, undefined, true);
+                theoryMap.get(methodName).children.push(method);
+                if (theoryNode.children.length === 1) {
+                    // refreshes the icon, which would normally be set in ctor
+                    // however, we changed this node to a folder by pushing a child so we need to refresh
+                    theoryNode.setIcon(this.testResults);
+                }
+
+                this.allNodes.push(method);
+            } else {
+                testNodes.push(new TestNode(`${parentFqn}.${t}`, t, undefined, this.testResults));
+            }
+        }
 
         this.allNodes = this.allNodes.concat(testNodes);
 
@@ -178,9 +227,9 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
 
         const filter = testRunContext.isSingleTest ?
             ((testNode: TestNode) => testNode.fqn === testRunContext.testName)
-            : ((testNode: TestNode) => testNode.fullName.startsWith(testRunContext.testName));
+            : ((testNode: TestNode) => testNode.fqn.startsWith(testRunContext.testName));
 
-        const testRun = this.allNodes.filter( (testNode: TestNode) => !testNode.isFolder && filter(testNode));
+        const testRun = this.allNodes.filter( (testNode: TestNode) => filter(testNode));
 
         this.statusBar.testRunning(testRun.length);
 

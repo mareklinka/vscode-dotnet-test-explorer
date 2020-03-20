@@ -5,31 +5,25 @@ export class TestNode {
     private _isError: boolean;
     private _isLoading: boolean;
     private _icon: string;
-    private _fqn: string;
     private _duration: string;
 
-    constructor(private _parentPath: string, private _name: string, private _separator: string, testResults: TestResult[], private _children?: TestNode[]) {
+    constructor(
+            private _fqn: string,
+            private _displayName: string,
+            private _parameters: string,
+            testResults: TestResult[],
+            private _children?: TestNode[],
+            private _isTheory: boolean = false) {
         this.setIcon(testResults);
-
-        this._fqn = Utility
-            .getFqnTestName(this.fullName); // nested classes are reported as ParentClass+ChildClass;
     }
 
     public get name(): string {
-        return this._name + (this._duration ? ` [${this._duration}]` : "");
-    }
-
-    public get fullName(): string {
-        return (this._parentPath ? `${this._parentPath}${this._separator}` : "") + this._name;
+        return this._displayName + (this._duration ? ` [${this._duration}]` : "");
     }
 
     public get fqn(): string {
         // We need to translate from how the test is represented in the tree to what it's fully qualified name is
         return this._fqn;
-    }
-
-    public get parentPath(): string {
-        return this._parentPath;
     }
 
     public get isFolder(): boolean {
@@ -48,9 +42,17 @@ export class TestNode {
         return (this._isLoading) ? "spinner.svg" : this._icon;
     }
 
+    public get isTheory(): boolean {
+        return this._isTheory;
+    }
+
+    public get parameters(): string {
+        return this._parameters;
+    }
+
     public setAsError(error: string) {
         this._isError = true;
-        this._name = error;
+        this._displayName = error;
     }
 
     public setAsLoading() {
@@ -64,21 +66,22 @@ export class TestNode {
             this._icon = this.isFolder ? "namespace.png" : "run.png";
         } else {
             if (this.isFolder) {
+                const testsForFolder = testResults.filter((tr) => tr.fullName.startsWith(this.fqn));
 
-                const testsForFolder = testResults.filter((tr) => tr.fullName.startsWith(this.fullName));
+                const nameBase = this.isTheory ? "theory" : "namespace";
 
                 if (testsForFolder.some((tr) => tr.outcome === "Failed")) {
-                    this._icon = "namespaceFailed.png";
+                    this._icon = `${nameBase}Failed.png`;
                 } else if (testsForFolder.some((tr) => tr.outcome === "NotExecuted")) {
-                    this._icon = "namespaceNotExecuted.png";
+                    this._icon = `${nameBase}NotExecuted.png`;
                 } else if (testsForFolder.some((tr) => tr.outcome === "Passed")) {
-                    this._icon = "namespacePassed.png";
+                    this._icon = `${nameBase}Passed.png`;
                 } else {
-                    this._icon = "namespace.png";
+                    this._icon = `${nameBase}.png`;
                 }
             } else {
                 const showDuration = Utility.getConfiguration().get<boolean>("showTestDuration");
-                const resultForTest = testResults.find((tr) => tr.fullName === this.fullName);
+                const resultForTest = testResults.find((tr) => tr.fullName === (this.fqn + (this._parameters ? this._parameters : "")));
 
                 if (resultForTest) {
                     this._icon = "test".concat(resultForTest.outcome, ".png");

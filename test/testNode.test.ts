@@ -6,14 +6,14 @@ import { TestResult } from "../src/testResult";
 suite("Icon tests", () => {
 
     test("Node that is loading", () => {
-        const node = new TestNode("", "Loading node", ".", null);
+        const node = new TestNode("Loading node", "Loading node", undefined, null);
         node.setAsLoading();
 
         assert.equal(node.icon, "spinner.svg");
     });
 
     test("Folder with no test result", () => {
-        const node = new TestNode("", "Folder node", ".", null, [new TestNode("parent", "child", ".", null)]);
+        const node = new TestNode("Folder node", "Folder node", undefined, null, [new TestNode("parent.child", "child", undefined, null)]);
 
         assert.equal(node.icon, "namespace.png");
     });
@@ -24,7 +24,7 @@ suite("Icon tests", () => {
             GetTestResult("2", "Passed", "NameSpace.MyClass", "NameSpace.MyClass.Test2"),
             GetTestResult("3", "Failed", "NameSpace.MyClass", "NameSpace.MyClass.Test3"),
         ];
-        const node = new TestNode("NameSpace", "MyClass", ".", testResult, [new TestNode("parent", "child", ".", null)]);
+        const node = new TestNode("NameSpace.MyClass", "MyClass", undefined, testResult, [new TestNode("parent.child", "child", undefined, null)]);
 
         assert.equal(node.icon, "namespaceFailed.png");
     });
@@ -35,7 +35,7 @@ suite("Icon tests", () => {
             GetTestResult("2", "NotExecuted", "NameSpace.MyClass", "NameSpace.MyClass.Test2"),
             GetTestResult("3", "Passed", "NameSpace.MyClass", "NameSpace.MyClass.Test3"),
         ];
-        const node = new TestNode("NameSpace", "MyClass", ".", testResult, [new TestNode("parent", "child", ".", null)]);
+        const node = new TestNode("NameSpace.MyClass", "MyClass", undefined, testResult, [new TestNode("parent.child", "child", undefined, null)]);
 
         assert.equal(node.icon, "namespaceNotExecuted.png");
     });
@@ -46,7 +46,7 @@ suite("Icon tests", () => {
             GetTestResult("2", "Passed", "NameSpace.MyClass", "NameSpace.MyClass.Test2"),
             GetTestResult("3", "Passed", "NameSpace.MyClass", "NameSpace.MyClass.Test3"),
         ];
-        const node = new TestNode("NameSpace", "MyClass", ".", testResult, [new TestNode("parent", "child", ".", null)]);
+        const node = new TestNode("NameSpace.MyClass", "MyClass", undefined, testResult, [new TestNode("parent.child", "child", undefined, null)]);
 
         assert.equal(node.icon, "namespacePassed.png");
     });
@@ -58,34 +58,34 @@ suite("Icon tests", () => {
             GetTestResult("2", "Passed", "NameSpace.MyClass", "Test2"),
             GetTestResult("3", "Passed", "NameSpace.MyClass", "Test3"),
         ];
-        const node = new TestNode("NameSpace", "MyClass", ".", testResult, [new TestNode("parent", "child", ".",null)]);
+        const node = new TestNode("NameSpace.MyClass", "MyClass", undefined, testResult, [new TestNode("parent.child", "child", undefined, null)]);
 
         assert.equal(node.icon, "namespacePassed.png");
     });
 
     test("Test with no test result", () => {
-        const node = new TestNode("", "Test node", ".", null);
+        const node = new TestNode("Test node", "Test node", undefined, null);
 
         assert.equal(node.icon, "run.png");
     });
 
     test("Test with passed test result", () => {
         const testResult = [GetTestResult("1", "Passed", "NameSpace.MyClass", "NameSpace.MyClass.Test1")];
-        const node = new TestNode("NameSpace.MyClass", "Test1", ".", testResult);
+        const node = new TestNode("NameSpace.MyClass.Test1", "Test1", undefined, testResult);
 
         assert.equal(node.icon, "testPassed.png");
     });
 
     test("Test with failed test result", () => {
         const testResult = [GetTestResult("1", "Failed", "NameSpace.MyClass", "NameSpace.MyClass.Test1")];
-        const node = new TestNode("NameSpace.MyClass", "Test1", ".", testResult);
+        const node = new TestNode("NameSpace.MyClass.Test1", "Test1", undefined, testResult);
 
         assert.equal(node.icon, "testFailed.png");
     });
 
     test("Test with not executed test result", () => {
         const testResult = [GetTestResult("1", "NotExecuted", "NameSpace.MyClass", "NameSpace.MyClass.Test1")];
-        const node = new TestNode("NameSpace.MyClass", "Test1", ".", testResult);
+        const node = new TestNode("NameSpace.MyClass.Test1", "Test1", undefined, testResult);
 
         assert.equal(node.icon, "testNotExecuted.png");
     });
