@@ -9,7 +9,6 @@ export interface ITestSymbol {
 export class Symbols {
     public static async getSymbols(uri, removeArgumentsFromMethods?: boolean): Promise<ITestSymbol[]> {
         return vscode.commands.executeCommand<vscode.DocumentSymbol[]>("vscode.executeDocumentSymbolProvider", uri)
-
             .then((symbols) => {
 
                 if (!symbols) {
@@ -60,12 +59,21 @@ export class Symbols {
         const isMethod = symbol.documentSymbol.kind === vscode.SymbolKind.Method;
         const parts = symbol.fullName.split(".");
 
-        let isParentClass = documentSymbols.find((s) => s.fullName === parts[0]).documentSymbol.kind === vscode.SymbolKind.Class;
-        let fqnBuilder = parts[0];
-        let builder = parts[0];
+        let rootNamespaceBuilder = "";
+        let i = 0;
+
+        do {
+            rootNamespaceBuilder += rootNamespaceBuilder ? `.${parts[i]}` : parts[i];
+
+            ++i;
+        } while (!documentSymbols.find((s) => s.fullName === rootNamespaceBuilder));
+
+        let isParentClass = documentSymbols.find((s) => s.fullName === rootNamespaceBuilder).documentSymbol.kind === vscode.SymbolKind.Class;
+        let fqnBuilder = rootNamespaceBuilder;
+        let builder = rootNamespaceBuilder;
         const methodName = parts[parts.length - 1];
 
-        for (let i = 1; i < parts.length - (isMethod ? 1 : 0); ++i) {
+        for (i; i < parts.length - (isMethod ? 1 : 0); ++i) {
             if (isParentClass) {
                 fqnBuilder += `+${parts[i]}`;
             } else {
