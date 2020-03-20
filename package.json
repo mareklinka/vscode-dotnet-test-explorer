@@ -103,6 +103,18 @@
       {
         "command": "dotnet-test-explorer.coverTest",
         "title": "Cover Test(s)"
+      },
+      {
+        "command": "dotnet-test-explorer.runTestInContext",
+        "title": "Run .NET Core Test in context"
+      },
+      {
+        "command": "dotnet-test-explorer.debugTestInContext",
+        "title": "Debug .NET Core Test in context"
+      },
+      {
+        "command": "dotnet-test-explorer.coverTestInContext",
+        "title": "Cover .NET Core Test in context"
       }
     ],
     "menus": {
@@ -154,17 +166,59 @@
           "when": "view == dotnetTestExplorer",
           "group": "dotnetTestExplorer@3"
         }
+      ],
+      "editor/context": [
+        {
+          "command": "dotnet-test-explorer.runTestInContext",
+          "group": "dotnetTestExplorer@0",
+          "when": "resourceLangId == csharp"
+        },
+        {
+          "command": "dotnet-test-explorer.runTestInContext",
+          "group": "dotnetTestExplorer@0",
+          "when": "resourceLangId == fsharp"
+        },
+        {
+          "command": "dotnet-test-explorer.runTestInContext",
+          "group": "dotnetTestExplorer@0",
+          "when": "resourceLangId == vb"
+        },
+        {
+          "command": "dotnet-test-explorer.debugTestInContext",
+          "group": "dotnetTestExplorer@0",
+          "when": "resourceLangId == csharp"
+        },
+        {
+          "command": "dotnet-test-explorer.debugTestInContext",
+          "group": "dotnetTestExplorer@0",
+          "when": "resourceLangId == fsharp"
+        },
+        {
+          "command": "dotnet-test-explorer.debugTestInContext",
+          "group": "dotnetTestExplorer@0",
+          "when": "resourceLangId == vb"
+        },
+        {
+          "command": "dotnet-test-explorer.coverTestInContext",
+          "group": "dotnetTestExplorer@0",
+          "when": "resourceLangId == csharp"
+        },
+        {
+          "command": "dotnet-test-explorer.coverTestInContext",
+          "group": "dotnetTestExplorer@0",
+          "when": "resourceLangId == fsharp"
+        },
+        {
+          "command": "dotnet-test-explorer.coverTestInContext",
+          "group": "dotnetTestExplorer@0",
+          "when": "resourceLangId == vb"
+        }
       ]
     },
     "configuration": {
       "type": "object",
       "title": ".NET Core Test Explorer",
       "properties": {
-        "dotnet-test-explorer.enableTelemetry": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to enable anonymous usage collection."
-        },
         "dotnet-test-explorer.testProjectPath": {
           "type": "string",
           "default": "",
@@ -262,6 +316,18 @@
         "command": "dotnet-test-explorer.runAllTests",
         "key": "alt+r alt+a",
         "mac": "alt+r alt+a"
+      },
+      {
+        "command": "dotnet-test-explorer.runTestInContext",
+        "key": "ctrl+u ctrl+r",
+        "mac": "cmd+u cmd+r",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "dotnet-test-explorer.debugTestInContext",
+        "key": "ctrl+u ctrl+d",
+        "mac": "cmd+u cmd+d",
+        "when": "editorTextFocus"
       }
     ]
   },
@@ -288,7 +354,6 @@
     "webpack-cli": "^3.3.11"
   },
   "dependencies": {
-    "applicationinsights": "^1.0.5",
     "fkill": "^7.0.0",
     "glob": "^7.1.2",
     "moment": "^2.24.0",

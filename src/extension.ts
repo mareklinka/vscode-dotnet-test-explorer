@@ -1,9 +1,9 @@
 "use strict";
 
 import * as vscode from "vscode";
-import { AppInsightsClient } from "./appInsightsClient";
 import { DotnetTestExplorer } from "./dotnetTestExplorer";
 import { Executor } from "./executor";
+import { FindTestInContext } from "./findTestInContext";
 import { GotoTest } from "./gotoTest";
 import { LeftClickTest } from "./leftClickTest";
 import { Logger } from "./logger";
@@ -24,6 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
     const problems = new Problems(testCommands);
     const statusBar = new StatusBar(testCommands);
     const leftClickTest = new LeftClickTest();
+    const findTestInContext = new FindTestInContext();
 
     Logger.Log("Starting extension");
 
@@ -54,7 +55,6 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     vscode.window.registerTreeDataProvider("dotnetTestExplorer", dotnetTestExplorer);
-    AppInsightsClient.sendEvent("loadExtension");
 
     testCommands.discoverTests();
 
@@ -111,6 +111,24 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand("dotnet-test-explorer.openPanel", () => {
         vscode.commands.executeCommand("workbench.view.extension.test");
+    }));
+
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand("dotnet-test-explorer.runTestInContext", (editor: vscode.TextEditor) => {
+        findTestInContext.find(editor.document, editor.selection.start).then((testRunContext) => {
+            testCommands.runTestByName(testRunContext.testName, testRunContext.isSingleTest);
+        });
+    }));
+
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand("dotnet-test-explorer.debugTestInContext", (editor: vscode.TextEditor) => {
+        findTestInContext.find(editor.document, editor.selection.start).then((testRunContext) => {
+            testCommands.debugTestByName(testRunContext.testName, testRunContext.isSingleTest);
+        });
+    }));
+
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand("dotnet-test-explorer.coverTestInContext", (editor: vscode.TextEditor) => {
+        findTestInContext.find(editor.document, editor.selection.start).then((testRunContext) => {
+            testCommands.coverTestByName(testRunContext.testName, testRunContext.isSingleTest);
+        });
     }));
 }
 

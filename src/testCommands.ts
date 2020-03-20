@@ -3,7 +3,6 @@ import * as glob from "glob"
 import * as path from "path";
 import { commands, Disposable, Event, EventEmitter, workspace } from "vscode";
 import * as vscode from "vscode";
-import { AppInsightsClient } from "./appInsightsClient";
 import { Executor } from "./executor";
 import { Logger } from "./logger";
 import { TestDirectories } from "./testDirectories";
@@ -152,7 +151,6 @@ export class TestCommands implements Disposable {
 
     public runAllTests(): void {
         this.runTestCommand("", false, false);
-        AppInsightsClient.sendEvent("runAllTests");
     }
 
     public runTest(test: TestNode): void {
@@ -164,23 +162,20 @@ export class TestCommands implements Disposable {
     }
 
     public runTestByName(testName: string, isSingleTest: boolean): void {
-        this.runTestCommand(testName, isSingleTest, false);
-        AppInsightsClient.sendEvent("runTest");
+        this.runTestCommand(testName, isSingleTest, false, false);
     }
 
     public coverTestByName(testName: string, isSingleTest: boolean): void {
-        this.runTestCommand(testName, isSingleTest, true);
+        this.runTestCommand(testName, isSingleTest, true, false);
     }
 
     public debugTestByName(testName: string, isSingleTest: boolean): void {
-        this.runTestCommand(testName, isSingleTest, true);
-        AppInsightsClient.sendEvent("runTest");
+        this.runTestCommand(testName, isSingleTest, false, true);
     }
 
     public rerunLastCommand(): void {
         if (this.lastRunTestContext != null) {
             this.runTestCommand(this.lastRunTestContext.testName, this.lastRunTestContext.isSingleTest, this.lastRunTestContext.collectCoverage);
-            AppInsightsClient.sendEvent("rerunLastCommand");
         }
     }
 
