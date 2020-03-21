@@ -7,7 +7,7 @@ export interface ITestSymbol {
 }
 
 export class Symbols {
-  public static async getSymbols(uri, removeArgumentsFromMethods?: boolean): Promise<Array<ITestSymbol>> {
+  public static async getSymbols(uri: vscode.Uri, removeArgumentsFromMethods: boolean): Promise<Array<ITestSymbol>> {
     return vscode.commands
       .executeCommand<Array<vscode.DocumentSymbol>>('vscode.executeDocumentSymbolProvider', uri)
 
@@ -16,7 +16,7 @@ export class Symbols {
           return [];
         }
 
-        const flattenedSymbols = Symbols.flatten(symbols, removeArgumentsFromMethods);
+        const flattenedSymbols = Symbols.flatten(symbols, removeArgumentsFromMethods, '');
 
         if (removeArgumentsFromMethods) {
           flattenedSymbols.map(s => s.documentSymbol).forEach(s => (s.name = s.name.replace(/\(.*\)/g, '')));
@@ -28,8 +28,8 @@ export class Symbols {
 
   public static flatten(
     documentSymbols: Array<vscode.DocumentSymbol>,
-    removeArgumentsFromMethods?: boolean,
-    parent?: string
+    removeArgumentsFromMethods: boolean,
+    parent: string
   ): Array<ITestSymbol> {
     let flattened: Array<ITestSymbol> = [];
 

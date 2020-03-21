@@ -1,4 +1,3 @@
-'use strict';
 import {
   CancellationToken,
   CodeLens,
@@ -31,7 +30,8 @@ export class TestStatusCodeLensProvider implements CodeLensProvider {
 
   public dispose() {
     while (this.disposables.length) {
-      this.disposables.pop().dispose();
+      // tslint:disable-next-line: no-non-null-assertion
+      this.disposables.pop()!.dispose();
     }
   }
 

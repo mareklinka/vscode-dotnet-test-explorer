@@ -6,9 +6,9 @@ import { TestNode } from "../src/testNode";
 suite("Find test location", () => {
 
     test("No symbols", () => {
-        const symbols = [];
+        const symbols: Array<vscode.SymbolInformation> = [];
 
-        const testNode = new TestNode("Test", "Test", undefined, null);
+        const testNode = new TestNode("Test", "Test", '', [], []);
 
         const gotoTest = new GotoTest();
 
@@ -20,7 +20,7 @@ suite("Find test location", () => {
             GetSymbol("Test",  vscode.SymbolKind.Method, "c:\\temp\\test.txt"),
         ];
 
-        const testNode = new TestNode("NotFound", undefined, "NotFound", null);
+        const testNode = new TestNode("NotFound", '', "NotFound", [], []);
 
         const gotoTest = new GotoTest();
 
@@ -32,7 +32,7 @@ suite("Find test location", () => {
             GetSymbol("Test",  vscode.SymbolKind.Method, "c:\\temp\\test.txt"),
         ];
 
-        const testNode = new TestNode("Test", "Test", undefined, null);
+        const testNode = new TestNode("Test", "Test", '', [], []);
 
         const gotoTest = new GotoTest();
         const result = gotoTest.findTestLocation(symbols, testNode);
@@ -45,7 +45,7 @@ suite("Find test location", () => {
             GetSymbol("Test", vscode.SymbolKind.Variable, "c:\\temp\\test.fs"),
         ];
 
-        const testNode = new TestNode("Test", "Test", undefined, null);
+        const testNode = new TestNode("Test", "Test", '', [], []);
 
         const gotoTest = new GotoTest();
         const result = gotoTest.findTestLocation(symbols, testNode);
@@ -58,7 +58,7 @@ suite("Find test location", () => {
             GetSymbol("Test with spaces", vscode.SymbolKind.Variable, "c:\\temp\\test.fs"),
         ];
 
-        const testNode = new TestNode("Test with spaces", "Test with spaces", undefined, null);
+        const testNode = new TestNode("Test with spaces", "Test with spaces", '', [], []);
 
         const gotoTest = new GotoTest();
         const result = gotoTest.findTestLocation(symbols, testNode);
@@ -72,7 +72,7 @@ suite("Find test location", () => {
             GetSymbol("Test",  vscode.SymbolKind.Method, "file:\\c:/temp/foldery/test.txt"),
         ];
 
-        const testNode = new TestNode("MyFolder.Test.Test", "Test", undefined, null);
+        const testNode = new TestNode("MyFolder.Test.Test", "Test", '', [], []);
 
         const gotoTest = new GotoTest();
         assert.throws(() => gotoTest.findTestLocation(symbols, testNode), "Namespace not matching uri");
@@ -85,7 +85,7 @@ suite("Find test location", () => {
             GetSymbol("Test",  vscode.SymbolKind.Method, "file:\\c:/temp/folderx/test.txt"),
         ];
 
-        const testNode = new TestNode("Test", "Test", undefined, null);
+        const testNode = new TestNode("Test", "Test", '', [], []);
 
         const gotoTest = new GotoTest();
         assert.throws(() => gotoTest.findTestLocation(symbols, testNode), "Found multiple matching symbols");
@@ -97,7 +97,7 @@ suite("Find test location", () => {
             GetSymbol("Test",  vscode.SymbolKind.Method, "c:\\temp\\test.txt"),
         ];
 
-        const testNode = new TestNode("Test", "Test", undefined, null);
+        const testNode = new TestNode("Test", "Test", '', [], []);
 
         const gotoTest = new GotoTest();
         const result = gotoTest.findTestLocation(symbols, testNode);
@@ -112,7 +112,7 @@ suite("Find test location", () => {
             GetSymbol("Test",  vscode.SymbolKind.Method, "c:\\temp\\test.txt"),
         ];
 
-        const testNode = new TestNode("Test", "Test", undefined, null);
+        const testNode = new TestNode("Test", "Test", '', [], []);
 
         const gotoTest = new GotoTest();
         const result = gotoTest.findTestLocation(symbols, testNode);
@@ -127,7 +127,7 @@ suite("Find test location", () => {
             GetSymbol("Test(param: value)",  vscode.SymbolKind.Method, "c:\\temp\\test.txt"),
         ];
 
-        const testNode = new TestNode("Test", "Test", undefined, null);
+        const testNode = new TestNode("Test", "Test", '', [], []);
 
         const gotoTest = new GotoTest();
         const result = gotoTest.findTestLocation(symbols, testNode);

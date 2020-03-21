@@ -7,9 +7,9 @@ import { ITestRunContext, TestCommands } from './testCommands';
 import { IDiscoverTestsResult } from './testDiscovery';
 import { TestNode } from './testNode';
 import { ITestResult, TestResult } from './testResult';
-import { TestResultsFile } from './testResultsFile';
 import { Utility } from './utility';
 
+// tslint:disable no-non-null-assertion
 export interface ITreeNode {
   tests: Array<string>;
   nodes: Map<string, ITreeNode>;
@@ -20,14 +20,13 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
   public _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
   public readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
-  private discoveredTests: Array<string>;
-  private testResults: Array<TestResult>;
+  private discoveredTests: Array<string> = [];
+  private testResults: Array<TestResult> = [];
   private allNodes: Array<TestNode> = [];
 
   constructor(
     private readonly context: vscode.ExtensionContext,
     private readonly testCommands: TestCommands,
-    private readonly resultsFile: TestResultsFile,
     private readonly statusBar: StatusBar
   ) {
     testCommands.onTestDiscoveryFinished(this.updateWithDiscoveredTests, this);
@@ -84,14 +83,14 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
     }
 
     if (!this.discoveredTests) {
-      const loadingNode = new TestNode('', 'Discovering tests', undefined, this.testResults);
+      const loadingNode = new TestNode('', 'Discovering tests', '', this.testResults, []);
       loadingNode.setAsLoading();
       return [loadingNode];
     }
 
     if (this.discoveredTests.length === 0) {
       return ['Please open or set the test project', 'and ensure your project compiles.'].map(e => {
-        const node = new TestNode('', e, undefined, this.testResults);
+        const node = new TestNode('', e, '', this.testResults, []);
         node.setAsError(e);
         return node;
       });
@@ -101,7 +100,7 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
 
     if (!useTreeView) {
       return this.discoveredTests.map(name => {
-        return new TestNode(`${name}`, name, undefined, this.testResults);
+        return new TestNode(`${name}`, name, '', this.testResults, []);
       });
     }
 
@@ -135,7 +134,7 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
         if (!c.nodes.has(split[i])) {
           c.nodes.set(split[i], { tests: [], nodes: new Map<string, ITreeNode>(), isNested: i > 0 });
         }
-        c = c.nodes.get(split[i]);
+        c = c.nodes.get(split[i])!;
       }
 
       this.addToObject(c, parts);
@@ -150,8 +149,8 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
     testNodes = Array.from(test.nodes.keys())
       .sort()
       .map(key => {
-        const fqn = parentFqn ? (test.nodes.get(key).isNested ? `${parentFqn}+${key}` : `${parentFqn}.${key}`) : key;
-        return new TestNode(fqn, key, undefined, this.testResults, this.createTestNode(fqn, test.nodes.get(key)));
+        const fqn = parentFqn ? (test.nodes.get(key)!.isNested ? `${parentFqn}+${key}` : `${parentFqn}.${key}`) : key;
+        return new TestNode(fqn, key, '', this.testResults, this.createTestNode(fqn, test.nodes.get(key)!));
       });
 
     const sorted = test.tests.sort();
@@ -179,15 +178,15 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
         let theoryNode: TestNode;
 
         if (theoryMap.has(methodName)) {
-          theoryNode = theoryMap.get(methodName);
+          theoryNode = theoryMap.get(methodName)!;
         } else {
-          theoryNode = new TestNode(fqn, methodName, undefined, this.testResults, [], true);
+          theoryNode = new TestNode(fqn, methodName, '', this.testResults, [], true);
           theoryMap.set(methodName, theoryNode);
           testNodes.push(theoryNode);
         }
 
-        const method = new TestNode(fqn, t, params, this.testResults, undefined, true);
-        theoryMap.get(methodName).children.push(method);
+        const method = new TestNode(fqn, t, params, this.testResults, [], true);
+        theoryMap.get(methodName)!.children.push(method);
         if (theoryNode.children.length === 1) {
           // refreshes the icon, which would normally be set in ctor
           // however, we changed this node to a folder by pushing a child so we need to refresh
@@ -196,7 +195,7 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
 
         this.allNodes.push(method);
       } else {
-        testNodes.push(new TestNode(`${parentFqn}.${t}`, t, undefined, this.testResults));
+        testNodes.push(new TestNode(`${parentFqn}.${t}`, t, '', this.testResults, []));
       }
     }
 
@@ -206,13 +205,13 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
   }
 
   private updateWithDiscoveringTest() {
-    this.discoveredTests = undefined;
+    this.discoveredTests = [];
     this._onDidChangeTreeData.fire();
   }
 
   private updateWithDiscoveredTests(results: Array<IDiscoverTestsResult>) {
     this.allNodes = [];
-    this.discoveredTests = [].concat(...results.map(r => r.testNames));
+    this.discoveredTests = new Array<string>().concat(...(results.map(r => r.testNames)));
     this.statusBar.discovered(this.discoveredTests.length);
     this._onDidChangeTreeData.fire();
   }
@@ -237,7 +236,7 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
 
     if (results.clearPreviousTestResults) {
       this.discoveredTests = [...fullNamesForTestResults];
-      this.testResults = undefined;
+      this.testResults = [];
     } else {
       const newTests = fullNamesForTestResults.filter(r => this.discoveredTests.indexOf(r) === -1);
 

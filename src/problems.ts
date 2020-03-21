@@ -5,21 +5,21 @@ import { Utility } from './utility';
 
 export class Problems {
   private static readonly regex = /in (.*):line (.*)/gm;
-  private readonly _diagnosticCollection: vscode.DiagnosticCollection;
+  private readonly _diagnosticCollection?: vscode.DiagnosticCollection;
 
-  public static createProblemsFromResults(results: Array<TestResult>) {
+  public static createProblemsFromResults(results: Array<TestResult>): any {
     const resultsWithStackTrace = results.filter(tr => tr.stackTrace);
 
     if (!resultsWithStackTrace.length) {
       return [];
     }
 
-    const problems = [];
+    const problems: Array<{ uri: string; lineNumber: number, message: string }> = [];
 
     resultsWithStackTrace.forEach(testResult => {
       let m = Problems.regex.exec(testResult.stackTrace);
 
-      const resultsWithLinks = [];
+      const resultsWithLinks: Array<{ uri: string; lineNumber: number, message: string }> = [];
 
       while (m !== null) {
         if (m.index === Problems.regex.lastIndex) {
@@ -33,7 +33,7 @@ export class Problems {
       problems.push(resultsWithLinks[resultsWithLinks.length - 1]);
     });
 
-    return problems.reduce((groups, item) => {
+    return problems.reduce((groups: any, item) => {
       const val = item.uri;
       groups[val] = groups[val] || [];
       groups[val].push(
@@ -57,6 +57,10 @@ export class Problems {
   }
 
   private addTestResults(results: ITestResult) {
+    if (!this._diagnosticCollection) {
+      return;
+    }
+
     this._diagnosticCollection.clear();
 
     const problems = Problems.createProblemsFromResults(results.testResults);

@@ -1,7 +1,8 @@
+
 import * as fs from 'fs';
 import * as glob from 'glob';
 import * as path from 'path';
-import { commands, Disposable, Event, EventEmitter, workspace } from 'vscode';
+import { commands, Disposable, Event, EventEmitter } from 'vscode';
 import * as vscode from 'vscode';
 import { Executor } from './executor';
 import { Logger } from './logger';
@@ -31,9 +32,15 @@ export class TestCommands implements Disposable {
   private readonly onTestDiscoveryFinishedEmitter = new EventEmitter<Array<IDiscoverTestsResult>>();
   private readonly onTestRunEmitter = new EventEmitter<ITestRunContext>();
   private readonly onNewTestResultsEmitter = new EventEmitter<ITestResult>();
-  private lastRunTestContext: ITestRunContext = undefined;
-  private testResultsFolder: string;
-  private waitForAllTests: IWaitForAllTests;
+  private lastRunTestContext?: ITestRunContext = undefined;
+  private testResultsFolder = '';
+  private waitForAllTests: IWaitForAllTests = {
+    currentNumberOfFiles: 0,
+    testsAlreadyRunning: false,
+    testResults: [],
+    clearPreviousTestResults: false,
+    numberOfTestDirectories: 0
+  };
   private testDiscoveryRunning = false;
 
   constructor(
@@ -76,6 +83,8 @@ export class TestCommands implements Disposable {
 
     this.setupTestResultFolder();
 
+    const discoveredTests: Array<IDiscoverTestsResult> = [];
+
     const runSeqOrAsync = async () => {
       const addToDiscoveredTests = (discoverdTestResult: IDiscoverTestsResult, dir: string) => {
         if (discoverdTestResult.testNames.length <= 0) {
@@ -84,8 +93,6 @@ export class TestCommands implements Disposable {
           discoveredTests.push(discoverdTestResult);
         }
       };
-
-      const discoveredTests = [];
 
       try {
         if (Utility.runInParallel) {
@@ -100,7 +107,8 @@ export class TestCommands implements Disposable {
 
         // Number of test directories might have been decreased
         // due to none-test directories being added by the glob / workspace filter
-        this.waitForAllTests.numberOfTestDirectories = this.testDirectories.getTestDirectories().length;
+        // tslint:disable-next-line: no-non-null-assertion
+        this.waitForAllTests!.numberOfTestDirectories = this.testDirectories.getTestDirectories().length;
 
         this.onTestDiscoveryFinishedEmitter.fire(discoveredTests);
       } catch (error) {
@@ -228,7 +236,7 @@ export class TestCommands implements Disposable {
         return;
       }
 
-      let latestCoverageFile: string;
+      let latestCoverageFile: string | undefined;
 
       if (coverageFiles.length === 1) {
         latestCoverageFile = coverageFiles[0];
@@ -247,7 +255,8 @@ export class TestCommands implements Disposable {
       }
 
       if (latestCoverageFile) {
-        const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+        // tslint:disable-next-line: no-non-null-assertion
+        const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.fsPath;
         const relativePath = Utility.getConfiguration().get<string>('coverageFilePath');
         let targetPath = workspaceRoot;
 
@@ -367,7 +376,7 @@ export class TestCommands implements Disposable {
     return new Promise((resolve, reject) => {
       let command =
         `dotnet test ${Utility.additionalArgumentsOption}` +
-        '--no-build --logger "trx" --results-directory "${this.testResultsFolder}"';
+        ` --no-build --logger "trx" --results-directory "${this.testResultsFolder}"`;
 
       if (testName && testName.length) {
         if (isSingleTest) {
@@ -379,9 +388,10 @@ export class TestCommands implements Disposable {
 
       if (collectCoverage) {
         const rsTemplatePath = this.context.asAbsolutePath(path.join('resources', 'coverlet.runsettings'));
-        const includeTestsInCoverage = Utility.getConfiguration()
-          .get<boolean>('includeTestAssemblyCoverage')
-          .toString();
+
+        const settingValue = Utility.getConfiguration().get<boolean>('includeTestAssemblyCoverage');
+        const setting = settingValue !== undefined ? settingValue.toString() : 'false';
+        const includeTestsInCoverage = setting.toString();
         const content = fs.readFileSync(rsTemplatePath, 'utf8').replace('INCLUDE_TESTS_TOKEN', includeTestsInCoverage);
         const runsettingsPath = path.join(this.testResultsFolder, 'coverlet.runsettings');
         fs.writeFileSync(runsettingsPath, content);
@@ -396,7 +406,7 @@ export class TestCommands implements Disposable {
           if (!debug) {
             return Executor.exec(
               command,
-              (err, stdout: string) => {
+              (err: any, stdout: string) => {
                 if (err && err.killed) {
                   Logger.Log('User has probably cancelled test run');
                   reject(new Error('UserAborted'));
@@ -412,7 +422,7 @@ export class TestCommands implements Disposable {
           } else {
             return Executor.debug(
               command,
-              (err, stdout: string) => {
+              (err: any, stdout: string) => {
                 if (err && err.killed) {
                   Logger.Log('User has probably cancelled test run');
                   reject(new Error('UserAborted'));
@@ -433,7 +443,7 @@ export class TestCommands implements Disposable {
     });
   }
 
-  private ensureDirExists(rootDir, targetDir) {
+  private ensureDirExists(rootDir: string, targetDir: string) {
     const sep = path.sep;
     const initDir = path.isAbsolute(targetDir) ? sep : '';
     const baseDir = rootDir;

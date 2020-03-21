@@ -4,8 +4,8 @@ export interface ITestResult {
 }
 
 export class TestResult {
-  private className: string;
-  private method: string;
+  private className = '';
+  private method = '';
 
   public constructor(
     private readonly _testId: string,
@@ -36,7 +36,7 @@ export class TestResult {
   }
 
   public get duration(): string {
-    return this._duration;
+    return this._duration ? this._duration : '';
   }
 
   public matches(className: string, method: string): boolean {

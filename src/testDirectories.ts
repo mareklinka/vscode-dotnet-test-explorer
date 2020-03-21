@@ -6,8 +6,8 @@ import { Logger } from './logger';
 import { Utility } from './utility';
 
 export class TestDirectories {
-  private directories: Array<string>;
-  private testsForDirectory: Array<{ dir: string; name: string }>;
+  private directories: Array<string> = [];
+  private testsForDirectory: Array<{ dir: string; name: string }> = [];
 
   public parseTestDirectories() {
     if (!vscode.workspace || !vscode.workspace.workspaceFolders) {
@@ -17,7 +17,7 @@ export class TestDirectories {
     const testDirectoryGlob = Utility.getConfiguration().get<string>('testProjectPath');
     this.directories = [];
 
-    const matchingDirs = [];
+    const matchingDirs: Array<string> = [];
 
     vscode.workspace.workspaceFolders.forEach(folder => {
       const globPattern = folder.uri.fsPath.replace('\\', '/') + '/' + testDirectoryGlob;
@@ -37,7 +37,7 @@ export class TestDirectories {
     });
   }
 
-  public addTestsForDirectory(testsForDirectory) {
+  public addTestsForDirectory(testsForDirectory: Array<{ dir: string; name: string }>) {
     this.testsForDirectory = this.testsForDirectory.concat(testsForDirectory);
   }
 
@@ -46,7 +46,8 @@ export class TestDirectories {
   }
 
   public getFirstTestForDirectory(directory: string): string {
-    return this.testsForDirectory.find(t => t.dir === directory).name;
+    // tslint:disable-next-line: no-non-null-assertion
+    return this.testsForDirectory.find(t => t.dir === directory)!.name;
   }
 
   public getTestDirectories(testName?: string): Array<string> {

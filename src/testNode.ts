@@ -2,17 +2,17 @@ import { TestResult } from './testResult';
 import { Utility } from './utility';
 
 export class TestNode {
-  private _isError: boolean;
-  private _isLoading: boolean;
-  private _icon: string;
-  private _duration: string;
+  private _isError = false;
+  private _isLoading = false;
+  private _icon = '';
+  private _duration = '';
 
   constructor(
     private readonly _fqn: string,
     private _displayName: string,
     private readonly _parameters: string,
     testResults: Array<TestResult>,
-    private readonly _children?: Array<TestNode>,
+    private readonly _children: Array<TestNode>,
     private readonly _isTheory: boolean = false
   ) {
     this.setIcon(testResults);
@@ -88,10 +88,10 @@ export class TestNode {
 
         if (resultForTest) {
           this._icon = 'test'.concat(resultForTest.outcome, '.png');
-          this._duration = showDuration ? resultForTest.duration : undefined;
+          this._duration = showDuration ? resultForTest.duration : '';
         } else {
           this._icon = 'testNotRun.png';
-          this._duration = undefined;
+          this._duration = '';
         }
       }
     }

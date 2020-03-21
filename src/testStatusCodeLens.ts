@@ -1,4 +1,3 @@
-'use strict';
 import { CodeLens, Range } from 'vscode';
 import { Utility } from './utility';
 
@@ -11,7 +10,7 @@ export class TestStatusCodeLens extends CodeLens {
     } else if (outcome === 'NotExecuted') {
       return Utility.codeLensSkipped;
     } else {
-      return undefined;
+      return '';
     }
   }
 
@@ -20,7 +19,7 @@ export class TestStatusCodeLens extends CodeLens {
 
     this.command = {
       title: status,
-      command: undefined
+      command: ''
     };
   }
 }

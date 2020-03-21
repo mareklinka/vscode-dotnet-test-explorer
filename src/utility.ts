@@ -1,4 +1,3 @@
-'use strict';
 import { platform, tmpdir } from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -97,7 +96,7 @@ export class Utility {
    * The directory specified in the options.
    */
   public static resolvePath(dir: string): string {
-    return path.isAbsolute(dir) ? dir : path.resolve(vscode.workspace.rootPath, dir);
+    return path.isAbsolute(dir) ? dir : path.resolve(vscode.workspace.rootPath!, dir);
   }
 
   private static getLensText(configuration: vscode.WorkspaceConfiguration, name: string, fallback: string): string {

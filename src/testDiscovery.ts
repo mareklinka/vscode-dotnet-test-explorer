@@ -58,7 +58,7 @@ function executeDotnetTest(testDirectoryPath: string, dotnetTestOptions: string)
 
     Executor.exec(
       command,
-      (err: Error, stdout: string, stderr: string) => {
+      (err: Error | null, stdout: string, stderr: string) => {
         if (err) {
           Logger.LogError(`Error while executing ${command}`, stdout);
 
@@ -98,7 +98,7 @@ function extractTestNames(testCommandStdout: string): Array<string> {
 
 function extractAssemblyPaths(testCommandStdout: string): Array<string> {
   const testRunLineRegex = /^Test run for (.+\.dll)\(.+\)/gm;
-  const results = [];
+  const results: Array<string> = [];
   let match;
 
   do {
@@ -174,7 +174,7 @@ function executeDotnetVstest(
 
     Executor.exec(
       command,
-      (err: Error, stdout: string, stderr: string) => {
+      (err: Error | null, stdout: string, stderr: string) => {
         if (err || stderr) {
           if (err) {
             Logger.LogError(`Error while executing ${command}.`, err);

@@ -1,5 +1,3 @@
-'use strict';
-
 import * as vscode from 'vscode';
 import { DotnetTestExplorer } from './dotnetTestExplorer';
 import { Executor } from './executor';
@@ -36,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   Utility.updateCache();
 
-  const dotnetTestExplorer = new DotnetTestExplorer(context, testCommands, testResults, statusBar);
+  const dotnetTestExplorer = new DotnetTestExplorer(context, testCommands, statusBar);
   const codeLensProvider = new TestStatusCodeLensProvider(testCommands);
 
   context.subscriptions.push(
@@ -141,7 +139,11 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerTextEditorCommand('dotnet-test-explorer.runTestInContext', (editor: vscode.TextEditor) => {
       findTestInContext.find(editor.document, editor.selection.start).then(testRunContext => {
-        testCommands.runTestByName(testRunContext.testName, testRunContext.isSingleTest);
+        if (testRunContext) {
+          testCommands.runTestByName(testRunContext.testName, testRunContext.isSingleTest);
+        } else {
+          vscode.window.showWarningMessage('Unable to find any tests in the current context');
+        }
       });
     })
   );
@@ -151,7 +153,11 @@ export function activate(context: vscode.ExtensionContext) {
       'dotnet-test-explorer.debugTestInContext',
       (editor: vscode.TextEditor) => {
         findTestInContext.find(editor.document, editor.selection.start).then(testRunContext => {
-          testCommands.debugTestByName(testRunContext.testName, testRunContext.isSingleTest);
+          if (testRunContext) {
+            testCommands.debugTestByName(testRunContext.testName, testRunContext.isSingleTest);
+          } else {
+            vscode.window.showWarningMessage('Unable to find any tests in the current context');
+          }
         });
       }
     )
@@ -162,7 +168,11 @@ export function activate(context: vscode.ExtensionContext) {
       'dotnet-test-explorer.coverTestInContext',
       (editor: vscode.TextEditor) => {
         findTestInContext.find(editor.document, editor.selection.start).then(testRunContext => {
-          testCommands.coverTestByName(testRunContext.testName, testRunContext.isSingleTest);
+          if (testRunContext) {
+            testCommands.coverTestByName(testRunContext.testName, testRunContext.isSingleTest);
+          } else {
+            vscode.window.showWarningMessage('Unable to find any tests in the current context');
+          }
         });
       }
     )

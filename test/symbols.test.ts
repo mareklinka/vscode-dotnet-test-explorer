@@ -22,7 +22,7 @@ suite("Flattend symbols", () => {
 
         myNamespace.children = [myClass];
 
-        const flattened = Symbols.flatten([myNamespace]);
+        const flattened = Symbols.flatten([myNamespace], false, '');
 
         assert.equal(flattened.length, 7);
 
@@ -52,13 +52,13 @@ suite("Flattend symbols", () => {
 
         const myMethod = GetDocumentSymbol("MyMethodOne", vscode.SymbolKind.Method);
 
-        let flattened = Symbols.flatten([myMethod]);
+        let flattened = Symbols.flatten([myMethod], false, '');
 
         assert.equal(flattened[0].fullName, "MyMethodOne");
 
         const myMethodWithArguments = GetDocumentSymbol("MyMethodOne(TestCase: Something)", vscode.SymbolKind.Method);
 
-        flattened = Symbols.flatten([myMethodWithArguments], true);
+        flattened = Symbols.flatten([myMethodWithArguments], true, '');
 
         assert.equal(flattened[0].fullName, "MyMethodOne");
 
@@ -66,5 +66,5 @@ suite("Flattend symbols", () => {
 });
 
 function GetDocumentSymbol(name: string, kind: vscode.SymbolKind): vscode.DocumentSymbol {
-    return new vscode.DocumentSymbol(name, null, kind, new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 1)), new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 1)));
+    return new vscode.DocumentSymbol(name, '', kind, new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 1)), new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 1)));
 }

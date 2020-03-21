@@ -1,4 +1,4 @@
-'use strict';
+// tslint:disable-next-line: no-implicit-any
 import * as fs from 'fs';
 import * as moment from 'moment';
 import { DOMParser, Element, Node } from 'xmldom';
@@ -38,7 +38,7 @@ function parseUnitTestResults(xml: Element): Array<TestResult> {
     const parsed = moment.duration(duration);
     duration = parsed.isValid()
       ? moment.utc(moment.duration(duration).asMilliseconds()).format('mm:ss.SSS')
-      : undefined;
+      : '';
 
     results.push(
       new TestResult(

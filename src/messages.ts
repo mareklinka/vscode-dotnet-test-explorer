@@ -10,7 +10,7 @@ export interface IMessage {
 }
 
 export interface IMessagesController {
-  showWarningMessage(message: IMessage);
+  showWarningMessage(message: IMessage): Thenable<void>;
 }
 
 export class MessagesController implements IMessagesController {
@@ -20,9 +20,9 @@ export class MessagesController implements IMessagesController {
    * @description
    * Displays the warning message that can be suppressed by the user.
    */
-  public showWarningMessage(message: IMessage) {
+  public showWarningMessage(message: IMessage): Thenable<void> {
     if (this.isSuppressed(message.type)) {
-      return;
+      return Promise.resolve();
     }
 
     return vscode.window.showWarningMessage(message.text, suppressMessageItem).then(item => {

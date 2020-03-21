@@ -7,6 +7,11 @@ export class GotoTest {
     vscode.commands
       .executeCommand<Array<vscode.SymbolInformation>>('vscode.executeWorkspaceSymbolProvider', test.fqn)
       .then(symbols => {
+        if (!symbols) {
+          vscode.window.showWarningMessage('Unable to navigate to the selected test - no symbol information available');
+          return;
+        }
+
         let symbol: vscode.SymbolInformation;
 
         try {
@@ -21,8 +26,11 @@ export class GotoTest {
                 loc.start.line,
                 loc.end.character
               );
-              vscode.window.activeTextEditor.selection = selection;
-              vscode.window.activeTextEditor.revealRange(selection, vscode.TextEditorRevealType.InCenter);
+
+              if (vscode.window.activeTextEditor) {
+                vscode.window.activeTextEditor.selection = selection;
+                vscode.window.activeTextEditor.revealRange(selection, vscode.TextEditorRevealType.InCenter);
+              }
             });
           });
         } catch (r) {
