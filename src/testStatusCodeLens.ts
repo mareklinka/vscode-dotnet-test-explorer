@@ -1,26 +1,26 @@
-"use strict";
-import { CodeLens, Range } from "vscode";
-import { Utility } from "./utility";
+'use strict';
+import { CodeLens, Range } from 'vscode';
+import { Utility } from './utility';
 
 export class TestStatusCodeLens extends CodeLens {
-    public static parseOutcome(outcome: string): string {
-        if (outcome === "Passed") {
-            return Utility.codeLensPassed;
-        } else if (outcome === "Failed") {
-            return Utility.codeLensFailed;
-        } else if (outcome === "NotExecuted") {
-            return Utility.codeLensSkipped;
-        } else {
-            return null;
-        }
+  public static parseOutcome(outcome: string): string {
+    if (outcome === 'Passed') {
+      return Utility.codeLensPassed;
+    } else if (outcome === 'Failed') {
+      return Utility.codeLensFailed;
+    } else if (outcome === 'NotExecuted') {
+      return Utility.codeLensSkipped;
+    } else {
+      return undefined;
     }
+  }
 
-    public constructor(range: Range, status: string) {
-        super(range);
+  public constructor(range: Range, status: string) {
+    super(range);
 
-        this.command = {
-            title: status,
-            command: null,
-        };
-    }
+    this.command = {
+      title: status,
+      command: undefined
+    };
+  }
 }

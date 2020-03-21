@@ -5,7 +5,10 @@
             "label": "build",
             "command": "npm",
             "type": "shell",
-            "args": ["run", "webpack"],
+            "args": [
+                "run",
+                "webpack"
+            ],
             "problemMatcher": [
                 "$tsc"
             ],
@@ -13,6 +16,23 @@
                 "reveal": "always"
             },
             "group": "build"
+        },
+        {
+            "type": "npm",
+            "label": "Lint",
+            "script": "tslint",
+            "group": "none",
+            "presentation": {
+                "echo": true,
+                "reveal": "never",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [
+                "$tslint5"
+            ]
         }
     ]
 }
