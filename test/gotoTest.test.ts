@@ -1,160 +1,226 @@
-import * as assert from "assert";
-import * as vscode from "vscode";
-import { GotoTest } from "../src/gotoTest";
-import { TestNode } from "../src/testNode";
+import * as assert from 'assert';
+import * as vscode from 'vscode';
+import { GotoTest } from '../src/gotoTest';
+import { TestNode } from '../src/testNode';
+import { ITestSymbol, Symbols } from '../src/symbols';
+import sinon = require('sinon');
 
-suite("Find test location", () => {
+suite('Find test location', () => {
+  const getSymbolsStub = sinon.stub(Symbols, 'getSymbols');
 
-    test("No symbols", () => {
-        const symbols: Array<vscode.SymbolInformation> = [];
+  test('No symbols', async () => {
+    const symbols: Array<vscode.SymbolInformation> = [];
 
-        const testNode = new TestNode("Test", "Test", '', [], []);
+    const testNode = new TestNode('Test', 'Test', '', [], []);
 
-        const gotoTest = new GotoTest();
+    const gotoTest = new GotoTest();
 
-        assert.throws(() => gotoTest.findTestLocation(symbols, testNode), "No symbols found)");
-    });
+    await assert.rejects(async () => await gotoTest.findTestLocation(symbols, testNode), 'no symbols found');
+  });
 
-    test("No symbol matching", () => {
-        const symbols = [
-            GetSymbol("Test",  vscode.SymbolKind.Method, "c:\\temp\\test.txt"),
-        ];
+  test('No symbol matching', async () => {
+    const symbols = [GetSymbol('Test', vscode.SymbolKind.Method, 'c:\\temp\\test.txt')];
 
-        const testNode = new TestNode("NotFound", '', "NotFound", [], []);
+    const testNode = new TestNode('NotFound', '', 'NotFound', [], []);
 
-        const gotoTest = new GotoTest();
+    const gotoTest = new GotoTest();
 
-        assert.throws(() => gotoTest.findTestLocation(symbols, testNode), "No symbols matching");
-    });
+    await assert.rejects(async () => await gotoTest.findTestLocation(symbols, testNode), 'no symbols found');
+  });
 
-    test("One symbol matching", () => {
-        const symbols = [
-            GetSymbol("Test",  vscode.SymbolKind.Method, "c:\\temp\\test.txt"),
-        ];
+  test('One symbol matching', async () => {
+    const symbols = [GetSymbol('Test', vscode.SymbolKind.Method, 'c:\\temp\\test.txt')];
+    const testSymbols: Array<ITestSymbol> = [
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method), parentName: 'Test', fullName: 'Test' }
+    ];
 
-        const testNode = new TestNode("Test", "Test", '', [], []);
+    getSymbolsStub
+      .withArgs(symbols[0].location.uri, sinon.match.bool)
+      .returns(Promise.resolve(testSymbols));
 
-        const gotoTest = new GotoTest();
-        const result = gotoTest.findTestLocation(symbols, testNode);
+    const testNode = new TestNode('Test', 'Test', '', [], []);
 
-        assert.equal(result.location.uri.fsPath, vscode.Uri.parse("c:\\temp\\test.txt").fsPath);
-    });
+    const gotoTest = new GotoTest();
+    const result = await gotoTest.findTestLocation(symbols, testNode);
 
-    test("One F# symbol matching", () => {
-        const symbols = [
-            GetSymbol("Test", vscode.SymbolKind.Variable, "c:\\temp\\test.fs"),
-        ];
+    assert.strictEqual(result.uri.fsPath, vscode.Uri.parse('c:\\temp\\test.txt').fsPath);
+  });
 
-        const testNode = new TestNode("Test", "Test", '', [], []);
+  test('One F# symbol matching', async () => {
+    const symbols = [GetSymbol('Test', vscode.SymbolKind.Variable, 'c:\\temp\\test.fs')];
+    const testSymbols: Array<ITestSymbol> = [
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method), parentName: 'Test', fullName: 'Test' }
+    ];
 
-        const gotoTest = new GotoTest();
-        const result = gotoTest.findTestLocation(symbols, testNode);
+    getSymbolsStub
+      .withArgs(symbols[0].location.uri, sinon.match.bool)
+      .returns(Promise.resolve(testSymbols));
 
-        assert.equal(result.location.uri.fsPath, vscode.Uri.parse("c:\\temp\\test.fs").fsPath);
-    });
+    const testNode = new TestNode('Test', 'Test', '', [], []);
 
-    test("One F# symbol with spaces matching", () => {
-        const symbols = [
-            GetSymbol("Test with spaces", vscode.SymbolKind.Variable, "c:\\temp\\test.fs"),
-        ];
+    const gotoTest = new GotoTest();
+    const result = await gotoTest.findTestLocation(symbols, testNode);
 
-        const testNode = new TestNode("Test with spaces", "Test with spaces", '', [], []);
+    assert.strictEqual(result.uri.fsPath, vscode.Uri.parse('c:\\temp\\test.fs').fsPath);
+  });
 
-        const gotoTest = new GotoTest();
-        const result = gotoTest.findTestLocation(symbols, testNode);
+  test('One F# symbol with spaces matching', async () => {
+    const symbols = [GetSymbol('Test with spaces', vscode.SymbolKind.Variable, 'c:\\temp\\test.fs')];
+    const testSymbols: Array<ITestSymbol> = [
+      {
+        documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method),
+        parentName: 'Test',
+        fullName: 'Test with spaces'
+      }
+    ];
 
-        assert.equal(result.location.uri.fsPath, vscode.Uri.parse("c:\\temp\\test.fs").fsPath);
-    });
+    getSymbolsStub
+      .withArgs(symbols[0].location.uri, sinon.match.bool)
+      .returns(Promise.resolve(testSymbols));
 
-    test("Multiple symbols matching with no namespace matching uri", () => {
-        const symbols = [
-            GetSymbol("Test",  vscode.SymbolKind.Method, "file:\\c:/temp/folderx/test.txt"),
-            GetSymbol("Test",  vscode.SymbolKind.Method, "file:\\c:/temp/foldery/test.txt"),
-        ];
+    const testNode = new TestNode('Test with spaces', 'Test with spaces', '', [], []);
 
-        const testNode = new TestNode("MyFolder.Test.Test", "Test", '', [], []);
+    const gotoTest = new GotoTest();
+    const result = await gotoTest.findTestLocation(symbols, testNode);
 
-        const gotoTest = new GotoTest();
-        assert.throws(() => gotoTest.findTestLocation(symbols, testNode), "Namespace not matching uri");
-    });
+    assert.strictEqual(result.uri.fsPath, vscode.Uri.parse('c:\\temp\\test.fs').fsPath);
+  });
 
-    test("Match with multiple symbols for tests without namespace", () => {
-        const symbols = [
-            GetSymbol("Test", vscode.SymbolKind.Method, "file:\\c:/temp/test3.txt"),
-            GetSymbol("Test", vscode.SymbolKind.Method, "file:\\c:/temp/myfolder/test.txt"),
-            GetSymbol("Test",  vscode.SymbolKind.Method, "file:\\c:/temp/folderx/test.txt"),
-        ];
+  test('Multiple symbols matching with no namespace matching uri', async () => {
+    const symbols = [
+      GetSymbol('Test', vscode.SymbolKind.Method, 'file:\\c:/temp/folderx/test.txt'),
+      GetSymbol('Test', vscode.SymbolKind.Method, 'file:\\c:/temp/foldery/test.txt')
+    ];
+    const testSymbols: Array<ITestSymbol> = [
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method), parentName: 'Test', fullName: 'Test' },
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method), parentName: 'Test', fullName: 'Test' }
+    ];
 
-        const testNode = new TestNode("Test", "Test", '', [], []);
+    for (let i = 0; i < symbols.length; ++i) {
+      getSymbolsStub.withArgs(symbols[i].location.uri, sinon.match.bool).returns(Promise.resolve([testSymbols[i]]));
+    }
 
-        const gotoTest = new GotoTest();
-        assert.throws(() => gotoTest.findTestLocation(symbols, testNode), "Found multiple matching symbols");
-    });
+    const testNode = new TestNode('MyFolder.Test.Test', 'Test', '', [], []);
 
-    test("Classes are not matches", () => {
-        const symbols = [
-            GetSymbol("Test", vscode.SymbolKind.Class, "c:\\temp\\test2.txt"),
-            GetSymbol("Test",  vscode.SymbolKind.Method, "c:\\temp\\test.txt"),
-        ];
+    const gotoTest = new GotoTest();
+    await assert.rejects(async () => await gotoTest.findTestLocation(symbols, testNode));
+  });
 
-        const testNode = new TestNode("Test", "Test", '', [], []);
+  test('Match with multiple symbols for tests without namespace', async () => {
+    const symbols = [
+      GetSymbol('Test', vscode.SymbolKind.Method, 'file:\\c:/temp/test3.txt'),
+      GetSymbol('Test', vscode.SymbolKind.Method, 'file:\\c:/temp/myfolder/test.txt'),
+      GetSymbol('Test', vscode.SymbolKind.Method, 'file:\\c:/temp/folderx/test.txt')
+    ];
 
-        const gotoTest = new GotoTest();
-        const result = gotoTest.findTestLocation(symbols, testNode);
+    const testSymbols: Array<ITestSymbol> = [
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method), parentName: 'Test', fullName: 'Test' },
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method), parentName: 'Test', fullName: 'Test' },
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method), parentName: 'Test', fullName: 'Test' }
+    ];
 
-        assert.equal(result.location.uri.fsPath, vscode.Uri.parse("c:\\temp\\test.txt").fsPath);
-    });
+    for (let i = 0; i < symbols.length; ++i) {
+      getSymbolsStub.withArgs(symbols[i].location.uri, sinon.match.bool).returns(Promise.resolve([testSymbols[i]]));
+    }
 
-    test("Match with multiple symbols matching start of name", () => {
-        const symbols = [
-            GetSymbol("Test3", vscode.SymbolKind.Method, "c:\\temp\\test3.txt"),
-            GetSymbol("Test2", vscode.SymbolKind.Method, "c:\\temp\\test2.txt"),
-            GetSymbol("Test",  vscode.SymbolKind.Method, "c:\\temp\\test.txt"),
-        ];
+    const testNode = new TestNode('Test', 'Test', '', [], []);
 
-        const testNode = new TestNode("Test", "Test", '', [], []);
+    const gotoTest = new GotoTest();
+    await assert.rejects(async () => await gotoTest.findTestLocation(symbols, testNode), 'multiple candidates found');
+  });
 
-        const gotoTest = new GotoTest();
-        const result = gotoTest.findTestLocation(symbols, testNode);
+  test('Classes are not matches', async () => {
+    const symbols = [
+      GetSymbol('Test', vscode.SymbolKind.Class, 'c:\\temp\\test2.txt'),
+      GetSymbol('Test', vscode.SymbolKind.Method, 'c:\\temp\\test.txt')
+    ];
 
-        assert.equal(result.location.uri.fsPath, vscode.Uri.parse("c:\\temp\\test.txt").fsPath);
-    });
+    const testSymbols: Array<ITestSymbol> = [
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Class), parentName: 'Test', fullName: 'Test' },
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method), parentName: 'Test', fullName: 'Test' }
+    ];
 
-    test("Match with multiple symbols matching start of name for xunit theory", () => {
-        const symbols = [
-            GetSymbol("Test3", vscode.SymbolKind.Method, "c:\\temp\\test3.txt"),
-            GetSymbol("Test2", vscode.SymbolKind.Method, "c:\\temp\\test2.txt"),
-            GetSymbol("Test(param: value)",  vscode.SymbolKind.Method, "c:\\temp\\test.txt"),
-        ];
+    for (let i = 0; i < symbols.length; ++i) {
+      getSymbolsStub.withArgs(symbols[i].location.uri, sinon.match.bool).returns(Promise.resolve([testSymbols[i]]));
+    }
 
-        const testNode = new TestNode("Test", "Test", '', [], []);
+    const testNode = new TestNode('Test', 'Test', '', [], []);
 
-        const gotoTest = new GotoTest();
-        const result = gotoTest.findTestLocation(symbols, testNode);
+    const gotoTest = new GotoTest();
+    const result = await gotoTest.findTestLocation(symbols, testNode);
 
-        assert.equal(result.location.uri.fsPath, vscode.Uri.parse("c:\\temp\\test.txt").fsPath);
-    });
-});
+    assert.strictEqual(result.uri.fsPath, vscode.Uri.parse('c:\\temp\\test.txt').fsPath);
+  });
 
-suite("Get test method name", () => {
+  test('Match with multiple symbols matching start of name', async () => {
+    const symbols = [
+      GetSymbol('Test3', vscode.SymbolKind.Method, 'c:\\temp\\test3.txt'),
+      GetSymbol('Test2', vscode.SymbolKind.Method, 'c:\\temp\\test2.txt'),
+      GetSymbol('Test', vscode.SymbolKind.Method, 'c:\\temp\\test.txt')
+    ];
 
-    test("Test name without namespace", () => {
+    const testSymbols: Array<ITestSymbol> = [
+      { documentSymbol: GetDocumentSymbol('Test3', vscode.SymbolKind.Class), parentName: '', fullName: 'Test3' },
+      { documentSymbol: GetDocumentSymbol('Test2', vscode.SymbolKind.Method), parentName: '', fullName: 'Test2' },
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method), parentName: '', fullName: 'Test' },
+    ];
 
-        const gotoTest = new GotoTest();
-        const result = gotoTest.getTestMethodFqn("Test");
+    for (let i = 0; i < symbols.length; ++i) {
+      getSymbolsStub.withArgs(symbols[i].location.uri, sinon.match.bool).returns(Promise.resolve([testSymbols[i]]));
+    }
 
-        assert.equal(result, "Test");
-    });
+    const testNode = new TestNode('Test', 'Test', '', [], []);
 
-    test("XUnit theory name without namespace", () => {
+    const gotoTest = new GotoTest();
+    const result = await gotoTest.findTestLocation(symbols, testNode);
 
-        const gotoTest = new GotoTest();
-        const result = gotoTest.getTestMethodFqn("Test(param: value)");
+    assert.strictEqual(result.uri.fsPath, vscode.Uri.parse('c:\\temp\\test.txt').fsPath);
+  });
 
-        assert.equal(result, "Test");
-    });
+  test('Match with multiple symbols matching start of name for xunit theory', async () => {
+    const symbols = [
+      GetSymbol('Test3', vscode.SymbolKind.Method, 'c:\\temp\\test3.txt'),
+      GetSymbol('Test2', vscode.SymbolKind.Method, 'c:\\temp\\test2.txt'),
+      GetSymbol('Test(param: value)', vscode.SymbolKind.Method, 'c:\\temp\\test.txt')
+    ];
+
+    const testSymbols: Array<ITestSymbol> = [
+      { documentSymbol: GetDocumentSymbol('Test3', vscode.SymbolKind.Class), parentName: '', fullName: 'Test3' },
+      { documentSymbol: GetDocumentSymbol('Test2', vscode.SymbolKind.Method), parentName: '', fullName: 'Test2' },
+      { documentSymbol: GetDocumentSymbol('Test', vscode.SymbolKind.Method), parentName: '', fullName: 'Test' },
+    ];
+
+    for (let i = 0; i < symbols.length; ++i) {
+      getSymbolsStub.withArgs(symbols[i].location.uri, sinon.match.bool).returns(Promise.resolve([testSymbols[i]]));
+    }
+
+    const testNode = new TestNode('Test', 'Test', '', [], []);
+
+    const gotoTest = new GotoTest();
+    const result = await gotoTest.findTestLocation(symbols, testNode);
+
+    assert.strictEqual(result.uri.fsPath, vscode.Uri.parse('c:\\temp\\test.txt').fsPath);
+  });
 });
 
 function GetSymbol(name: string, kind: vscode.SymbolKind, filePath: string): vscode.SymbolInformation {
-    return new vscode.SymbolInformation(name,  kind, "", new vscode.Location(vscode.Uri.parse(filePath), new vscode.Range(new vscode.Position(10, 10), new vscode.Position(20, 20))));
+  return new vscode.SymbolInformation(
+    name,
+    kind,
+    '',
+    new vscode.Location(
+      vscode.Uri.parse(filePath),
+      new vscode.Range(new vscode.Position(10, 10), new vscode.Position(20, 20))
+    )
+  );
+}
+
+function GetDocumentSymbol(name: string, kind: vscode.SymbolKind): vscode.DocumentSymbol {
+  return new vscode.DocumentSymbol(
+    name,
+    '',
+    kind,
+    new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 1)),
+    new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 1))
+  );
 }

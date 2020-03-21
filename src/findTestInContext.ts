@@ -17,9 +17,15 @@ export class FindTestInContext {
 
       symbolCandidate = symbolsInRange.find(s => s.documentSymbol.kind === vscode.SymbolKind.Class);
 
-      if (symbolCandidate) {
-        return { testName: symbolCandidate.fullName, isSingleTest: false, collectCoverage: false };
-      }
-    });
-  }
+            if (symbolCandidate) {
+                return {testName: symbolCandidate.fullName, isSingleTest: true, collectCoverage: false};
+            }
+
+            symbolCandidate = symbolsInRange.reverse().find( (s) => s.documentSymbol.kind === vscode.SymbolKind.Class);
+
+            if (symbolCandidate) {
+                return {testName: symbolCandidate.fullName, isSingleTest: false, collectCoverage: false};
+            }
+        });
+    }
 }

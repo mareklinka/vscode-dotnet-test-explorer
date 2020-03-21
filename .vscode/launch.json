@@ -91,20 +91,6 @@
             "preLaunchTask": "build"
         },
         {
-            "name": "Launch Extension (VEA)",
-            "type": "extensionHost",
-            "request": "launch",
-            "runtimeExecutable": "${execPath}",
-            "args": [
-                "C:/Source/viacar-vea-backend",
-                "--extensionDevelopmentPath=${workspaceRoot}"
-            ],
-            "stopOnEntry": false,
-            "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "build"
-        },
-        {
             "name": "Extension Tests",
             "type": "extensionHost",
             "request": "launch",
