@@ -91,35 +91,6 @@
             "preLaunchTask": "build"
         },
         {
-            "name": "Launch Tests",
-            "type": "extensionHost",
-            "request": "launch",
-            "runtimeExecutable": "${execPath}",
-            "args": [
-                "${workspaceRoot}/test/xunit",
-                "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/test"
-            ],
-            "stopOnEntry": false,
-            "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "build"
-        },
-        {
-            "name": "Launch Extension (VEA)",
-            "type": "extensionHost",
-            "request": "launch",
-            "runtimeExecutable": "${execPath}",
-            "args": [
-                "C:/Source/viacar-vea-backend",
-                "--extensionDevelopmentPath=${workspaceRoot}"
-            ],
-            "stopOnEntry": false,
-            "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "preLaunchTask": "build"
-        },
-        {
             "name": "Extension Tests",
             "type": "extensionHost",
             "request": "launch",
@@ -129,7 +100,7 @@
               "--extensionTestsPath=${workspaceFolder}/out/test"
             ],
             "outFiles": ["${workspaceFolder}/out/test/**/*.js"],
-            "preLaunchTask": "npm: test"
+            "preLaunchTask": "npm: test-compile"
           }
     ]
 }

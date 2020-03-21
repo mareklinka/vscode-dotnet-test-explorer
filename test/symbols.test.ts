@@ -1,70 +1,72 @@
-import * as assert from "assert";
-import * as vscode from "vscode";
-import { Symbols } from "../src/symbols";
+import * as assert from 'assert';
+import * as vscode from 'vscode';
+import { Symbols } from '../src/symbols';
 
-suite("Flattend symbols", () => {
+suite('Flattend symbols', () => {
+  test('Has correct fully qualified names when classes contains fqn and classes are nested', () => {
+    const myNamespace = GetDocumentSymbol('MyNameSpace', vscode.SymbolKind.Namespace);
 
-    test("Has correct fully qualified names when classes contains fqn and classes are nested", () => {
+    const myClass = GetDocumentSymbol('MyNameSpace.MyClass', vscode.SymbolKind.Class);
 
-        const myNamespace = GetDocumentSymbol("MyNameSpace", vscode.SymbolKind.Namespace);
+    const myNestedClass = GetDocumentSymbol('MyNameSpace.MyClass+MyNestedClass', vscode.SymbolKind.Class);
 
-        const myClass = GetDocumentSymbol("MyNameSpace.MyClass", vscode.SymbolKind.Class);
+    const myMethodOne = GetDocumentSymbol('MyMethodOne', vscode.SymbolKind.Method);
 
-        const myNestedClass = GetDocumentSymbol("MyNameSpace.MyClass.MyNestedClass", vscode.SymbolKind.Class);
+    const myMethodTwo = GetDocumentSymbol('MyMethodTwo', vscode.SymbolKind.Method);
 
-        const myMethodOne = GetDocumentSymbol("MyMethodOne", vscode.SymbolKind.Method);
+    myNestedClass.children = [myMethodOne, myMethodTwo];
 
-        const myMethodTwo = GetDocumentSymbol("MyMethodTwo", vscode.SymbolKind.Method);
+    myClass.children = [myMethodOne, myMethodTwo, myNestedClass];
 
-        myNestedClass.children = [myMethodOne, myMethodTwo];
+    myNamespace.children = [myClass];
 
-        myClass.children = [myMethodOne, myMethodTwo, myNestedClass];
+    const flattened = Symbols.flatten([myNamespace], false, '');
 
-        myNamespace.children = [myClass];
+    assert.equal(flattened.length, 7);
 
-        const flattened = Symbols.flatten([myNamespace]);
+    assert.equal(flattened[0].fullName, 'MyNameSpace');
+    assert.equal(flattened[0].parentName, '');
 
-        assert.equal(flattened.length, 7);
+    assert.equal(flattened[1].fullName, 'MyNameSpace.MyClass');
+    assert.equal(flattened[1].parentName, 'MyNameSpace');
 
-        assert.equal(flattened[0].fullName, "MyNameSpace");
-        assert.equal(flattened[0].parentName, null);
+    assert.equal(flattened[2].fullName, 'MyNameSpace.MyClass.MyMethodOne');
+    assert.equal(flattened[2].parentName, 'MyNameSpace.MyClass');
 
-        assert.equal(flattened[1].fullName, "MyNameSpace.MyClass");
-        assert.equal(flattened[1].parentName, "MyNameSpace");
+    assert.equal(flattened[3].fullName, 'MyNameSpace.MyClass.MyMethodTwo');
+    assert.equal(flattened[3].parentName, 'MyNameSpace.MyClass');
 
-        assert.equal(flattened[2].fullName, "MyNameSpace.MyClass.MyMethodOne");
-        assert.equal(flattened[2].parentName, "MyNameSpace.MyClass");
+    assert.equal(flattened[4].fullName, 'MyNameSpace.MyClass+MyNestedClass');
+    assert.equal(flattened[4].parentName, 'MyNameSpace.MyClass');
 
-        assert.equal(flattened[3].fullName, "MyNameSpace.MyClass.MyMethodTwo");
-        assert.equal(flattened[3].parentName, "MyNameSpace.MyClass");
+    assert.equal(flattened[5].fullName, 'MyNameSpace.MyClass+MyNestedClass.MyMethodOne');
+    assert.equal(flattened[5].parentName, 'MyNameSpace.MyClass+MyNestedClass');
 
-        assert.equal(flattened[4].fullName, "MyNameSpace.MyClass.MyNestedClass");
-        assert.equal(flattened[4].parentName, "MyNameSpace.MyClass");
+    assert.equal(flattened[6].fullName, 'MyNameSpace.MyClass+MyNestedClass.MyMethodTwo');
+    assert.equal(flattened[6].parentName, 'MyNameSpace.MyClass+MyNestedClass');
+  });
 
-        assert.equal(flattened[5].fullName, "MyNameSpace.MyClass.MyNestedClass.MyMethodOne");
-        assert.equal(flattened[5].parentName, "MyNameSpace.MyClass.MyNestedClass");
+  test('Can remove arguments to test methods', () => {
+    const myMethod = GetDocumentSymbol('MyMethodOne', vscode.SymbolKind.Method);
 
-        assert.equal(flattened[6].fullName, "MyNameSpace.MyClass.MyNestedClass.MyMethodTwo");
-        assert.equal(flattened[6].parentName, "MyNameSpace.MyClass.MyNestedClass");
-    });
+    let flattened = Symbols.flatten([myMethod], false, '');
 
-    test("Can remove arguments to test methods", () => {
+    assert.equal(flattened[0].fullName, 'MyMethodOne');
 
-        const myMethod = GetDocumentSymbol("MyMethodOne", vscode.SymbolKind.Method);
+    const myMethodWithArguments = GetDocumentSymbol('MyMethodOne(TestCase: Something)', vscode.SymbolKind.Method);
 
-        let flattened = Symbols.flatten([myMethod]);
+    flattened = Symbols.flatten([myMethodWithArguments], true, '');
 
-        assert.equal(flattened[0].fullName, "MyMethodOne");
-
-        const myMethodWithArguments = GetDocumentSymbol("MyMethodOne(TestCase: Something)", vscode.SymbolKind.Method);
-
-        flattened = Symbols.flatten([myMethodWithArguments], true);
-
-        assert.equal(flattened[0].fullName, "MyMethodOne");
-
-    });
+    assert.equal(flattened[0].fullName, 'MyMethodOne');
+  });
 });
 
 function GetDocumentSymbol(name: string, kind: vscode.SymbolKind): vscode.DocumentSymbol {
-    return new vscode.DocumentSymbol(name, null, kind, new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 1)), new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 1)));
+  return new vscode.DocumentSymbol(
+    name,
+    '',
+    kind,
+    new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 1)),
+    new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 1))
+  );
 }

@@ -1,0 +1,47 @@
+trigger: none
+pr:
+  - master
+
+strategy:
+  matrix:
+    linux:
+      imageName: 'ubuntu-latest'
+    mac:
+      imageName: 'macOS-latest'
+    windows:
+      imageName: 'windows-latest'
+
+pool:
+  vmImage: $(imageName)
+
+steps:
+
+- task: NodeTool@0
+  inputs:
+    versionSpec: '12.x'
+  displayName: 'Install Node.js'
+
+- bash: |
+    /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+    echo ">>> Started xvfb"
+  displayName: Start xvfb
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+
+- task: Npm@1
+  displayName: 'Install dependencies'
+  inputs:
+    command: 'ci'
+
+- task: Npm@1
+  displayName: 'Lint'
+  inputs:
+    command: 'custom'
+    customCommand: 'run tslint'
+
+- task: Npm@1
+  displayName: 'Run tests'
+  inputs:
+    command: 'custom'
+    customCommand: 'test'
+  env:
+    DISPLAY: ':99.0'
