@@ -335,7 +335,7 @@
     "vscode:prepublish": "webpack --mode production",
     "test-compile": "tsc -p ./",
     "test": "npm run test-compile && node ./node_modules/vscode/bin/test",
-    "tslint": "tslint --outputAbsolutePaths -t verbose src/**/*.ts",
+    "tslint": "tslint --project tsconfig.json --outputAbsolutePaths -t verbose src/**/*.ts",
     "webpack": "webpack --mode development",
     "webpack-dev": "webpack --mode development --watch"
   },

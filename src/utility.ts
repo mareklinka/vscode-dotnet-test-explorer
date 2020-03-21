@@ -96,6 +96,7 @@ export class Utility {
    * The directory specified in the options.
    */
   public static resolvePath(dir: string): string {
+    // tslint:disable-next-line: deprecation tslint:disable-next-line: no-non-null-assertion
     return path.isAbsolute(dir) ? dir : path.resolve(vscode.workspace.rootPath!, dir);
   }
 
