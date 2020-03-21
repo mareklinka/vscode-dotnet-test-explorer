@@ -8,3 +8,5 @@ yarn.*
 [Oo]bj/
 lcov.info
 dist/
+
+*.vsix

@@ -20,7 +20,7 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
   public _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
   public readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
-  private discoveredTests: Array<string> = [];
+  private discoveredTests?: Array<string> = undefined;
   private testResults: Array<TestResult> = [];
   private allNodes: Array<TestNode> = [];
 
@@ -205,7 +205,7 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
   }
 
   private updateWithDiscoveringTest() {
-    this.discoveredTests = [];
+    this.discoveredTests = undefined;
     this._onDidChangeTreeData.fire();
   }
 
@@ -238,14 +238,14 @@ export class DotnetTestExplorer implements TreeDataProvider<TestNode> {
       this.discoveredTests = [...fullNamesForTestResults];
       this.testResults = [];
     } else {
-      const newTests = fullNamesForTestResults.filter(r => this.discoveredTests.indexOf(r) === -1);
+      const newTests = fullNamesForTestResults.filter(r => this.discoveredTests!.indexOf(r) === -1);
 
       if (newTests.length > 0) {
-        this.discoveredTests.push(...newTests);
+        this.discoveredTests!.push(...newTests);
       }
     }
 
-    this.discoveredTests = this.discoveredTests.sort();
+    this.discoveredTests = this.discoveredTests!.sort();
 
     this.statusBar.discovered(this.discoveredTests.length);
 
