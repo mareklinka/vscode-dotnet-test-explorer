@@ -45,7 +45,7 @@ export class GotoTest {
     symbols: Array<vscode.SymbolInformation>,
     testNode: TestNode
   ): Promise<ITestSymbolLocation> {
-    const candidates: Array<ITestSymbolLocation> = [];
+    const candidates: Map<string, ITestSymbolLocation> = new Map<string, ITestSymbolLocation>();
 
     for (let i = 0; i < symbols.length; ++i) {
       const docSymbols = await Symbols.getSymbols(symbols[i].location.uri, true);
@@ -53,14 +53,21 @@ export class GotoTest {
       const candidate = docSymbols.find(ts => this.isSymbolATestCandidate(symbols[i]) && ts.fullName === testNode.fqn);
 
       if (candidate) {
-        candidates.push({ range: candidate.documentSymbol.range, uri: symbols[i].location.uri });
+        // path@(startline:startchar-endline:endchar)
+        const key =
+          `${symbols[i].location.uri.fsPath}@` +
+          `(${candidate.documentSymbol.range.start.line},${candidate.documentSymbol.range.start.character}-` +
+          `${candidate.documentSymbol.range.end.line}:${candidate.documentSymbol.range.end.character})`;
+
+        candidates.set(key, { range: candidate.documentSymbol.range, uri: symbols[i].location.uri });
       }
     }
 
-    if (candidates.length === 0) {
+    if (candidates.size === 0) {
       throw new Error('Could not find test (no symbols found)');
-    } else if (candidates.length === 1) {
-      return candidates[0];
+    } else if (candidates.size === 1) {
+      // tslint:disable-next-line: no-non-null-assertion
+      return candidates.get(candidates.keys().next().value)!;
     } else {
       throw new Error('Could not find test (multiple candidates found)');
     }
