@@ -10,10 +10,15 @@ export class GotoTest {
         'vscode.executeWorkspaceSymbolProvider',
         test.fqn.substr(test.fqn.lastIndexOf('.') + 1)
       )
-    ).filter(s => s.kind === vscode.SymbolKind.Method);
+    );
+
+    if (!symbols) {
+      vscode.window.showWarningMessage('Unable to navigate to the selected test - no symbol information available');
+      return;
+    }
 
     try {
-      const symbol = await this.findTestLocation(symbols, test);
+      const symbol = await this.findTestLocation(symbols.filter(s => s.kind === vscode.SymbolKind.Method), test);
 
       vscode.workspace.openTextDocument(symbol.uri).then(doc => {
         vscode.window.showTextDocument(doc).then(editor => {
@@ -40,17 +45,25 @@ export class GotoTest {
     symbols: Array<vscode.SymbolInformation>,
     testNode: TestNode
   ): Promise<ITestSymbolLocation> {
+    const candidates: Array<ITestSymbolLocation> = [];
+
     for (let i = 0; i < symbols.length; ++i) {
       const docSymbols = await Symbols.getSymbols(symbols[i].location.uri, true);
 
       const candidate = docSymbols.find(ts => this.isSymbolATestCandidate(symbols[i]) && ts.fullName === testNode.fqn);
 
       if (candidate) {
-        return { range: candidate.documentSymbol.range, uri: symbols[i].location.uri };
+        candidates.push({ range: candidate.documentSymbol.range, uri: symbols[i].location.uri });
       }
     }
 
-    throw new Error('Could not find test (no symbols found)');
+    if (candidates.length === 0) {
+      throw new Error('Could not find test (no symbols found)');
+    } else if (candidates.length === 1) {
+      return candidates[0];
+    } else {
+      throw new Error('Could not find test (multiple candidates found)');
+    }
   }
 
   private isSymbolATestCandidate(s: vscode.SymbolInformation): boolean {

@@ -7,13 +7,15 @@ export interface ITestSymbol {
 }
 
 export class Symbols {
-  public static async getSymbols(uri, removeArgumentsFromMethods?: boolean): Promise<Array<ITestSymbol>> {
+  public static async getSymbols(uri: vscode.Uri, removeArgumentsFromMethods: boolean): Promise<Array<ITestSymbol>> {
     return vscode.commands
       .executeCommand<Array<vscode.DocumentSymbol>>('vscode.executeDocumentSymbolProvider', uri)
       .then(symbols => {
         if (!symbols) {
           return [];
         }
+
+        const flattenedSymbols = Symbols.flatten(symbols, removeArgumentsFromMethods, '');
 
         if (removeArgumentsFromMethods) {
           flattenedSymbols.map(s => s.documentSymbol).forEach(s => (s.name = s.name.replace(/\(.*\)/g, '')));
@@ -25,12 +27,19 @@ export class Symbols {
 
   public static flatten(
     documentSymbols: Array<vscode.DocumentSymbol>,
-    removeArgumentsFromMethods?: boolean,
-    parent?: string
+    removeArgumentsFromMethods: boolean,
+    parent: string
   ): Array<ITestSymbol> {
     let flattened: Array<ITestSymbol> = [];
 
     documentSymbols.map((ds: vscode.DocumentSymbol) => {
+      let nameForCurrentLevel: string;
+      let nameForSymbol = ds.name;
+
+      if (ds.kind === vscode.SymbolKind.Method && removeArgumentsFromMethods) {
+        nameForSymbol = nameForSymbol.replace(/\(.*\)/g, '');
+      }
+
       if (ds.kind === vscode.SymbolKind.Class) {
         nameForCurrentLevel = nameForSymbol;
       } else {
@@ -43,6 +52,8 @@ export class Symbols {
         flattened = flattened.concat(Symbols.flatten(ds.children, removeArgumentsFromMethods, nameForCurrentLevel));
       }
     });
+
+    return flattened;
   }
 
   private static constructFqnForSymbol(symbol: ITestSymbol, documentSymbols: Array<ITestSymbol>): ITestSymbol {
@@ -59,7 +70,8 @@ export class Symbols {
     } while (!documentSymbols.find(s => s.fullName === rootNamespaceBuilder));
 
     let isParentClass =
-      documentSymbols.find(s => s.fullName === rootNamespaceBuilder).documentSymbol.kind === vscode.SymbolKind.Class;
+      // tslint:disable-next-line: no-non-null-assertion
+      documentSymbols.find(s => s.fullName === rootNamespaceBuilder)!.documentSymbol.kind === vscode.SymbolKind.Class;
     let fqnBuilder = rootNamespaceBuilder;
     let builder = rootNamespaceBuilder;
     const methodName = parts[parts.length - 1];
@@ -75,7 +87,11 @@ export class Symbols {
 
       const nextSymbol = documentSymbols.find(s => s.fullName === builder);
 
-      isParentClass = nextSymbol && nextSymbol.documentSymbol.kind === vscode.SymbolKind.Class;
+      if (nextSymbol) {
+        isParentClass = (nextSymbol && nextSymbol.documentSymbol.kind === vscode.SymbolKind.Class);
+      } else {
+        isParentClass = false;
+      }
     }
 
     if (isMethod) {
