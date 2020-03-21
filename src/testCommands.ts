@@ -321,15 +321,14 @@ export class TestCommands implements Disposable {
 
     private runBuildCommandForSpecificDirectory(testDirectoryPath: string): Promise<any>  {
         return new Promise((resolve, reject) => {
-
             if (Utility.skipBuild) {
                 Logger.Log(`User has passed --no-build, skipping build`);
                 resolve();
             } else {
                 Logger.Log(`Executing dotnet build in ${testDirectoryPath}`);
 
-                Executor.exec("dotnet build", (err: any, stdout: string) => {
-                    if (err) {
+                Executor.exec("dotnet build", (err: any, _: string, stderr: string) => {
+                    if (err || stderr) {
                         reject(new Error("Build command failed"));
                     }
                     resolve();

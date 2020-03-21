@@ -58,6 +58,13 @@ function executeDotnetTest(testDirectoryPath: string, dotnetTestOptions: string)
                 return;
             }
 
+            if (stderr) {
+                Logger.LogError(`Error while executing ${command}`, stderr);
+
+                reject(stderr);
+                return;
+            }
+
             resolve(stdout);
         }, testDirectoryPath);
     });
@@ -152,8 +159,12 @@ function executeDotnetVstest(assemblyPaths: string[], listTestsTargetPath: strin
         Executor.exec(
             command,
             (err: Error, stdout: string, stderr: string) => {
-                if (err) {
-                    Logger.LogError(`Error while executing ${command}.`, err);
+                if (err || stderr) {
+                    if (err) {
+                        Logger.LogError(`Error while executing ${command}.`, err);
+                    } else {
+                        Logger.LogError(`Error while executing ${command}.`, stderr);
+                    }
 
                     const flagNotRecognizedRegex = /\/ListFullyQualifiedTests/m;
                     if (flagNotRecognizedRegex.test(stderr)) {
