@@ -10,7 +10,6 @@ export class Symbols {
     public static async getSymbols(uri, removeArgumentsFromMethods?: boolean): Promise<ITestSymbol[]> {
         return vscode.commands.executeCommand<vscode.DocumentSymbol[]>("vscode.executeDocumentSymbolProvider", uri)
             .then((symbols) => {
-
                 if (!symbols) {
                     return [];
                 }
@@ -26,10 +25,9 @@ export class Symbols {
     }
 
     public static flatten(documentSymbols: vscode.DocumentSymbol[], removeArgumentsFromMethods?: boolean, parent?: string): ITestSymbol[] {
-
         let flattened: ITestSymbol[] = [];
 
-        documentSymbols.map( (ds: vscode.DocumentSymbol) => {
+        documentSymbols.map((ds: vscode.DocumentSymbol) => {
 
             let nameForCurrentLevel: string;
 

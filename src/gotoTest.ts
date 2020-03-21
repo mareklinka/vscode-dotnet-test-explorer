@@ -6,9 +6,9 @@ import { TestNode } from "./testNode";
 export class GotoTest {
 
     public async go(test: TestNode): Promise<void> {
-        const symbols = await vscode.commands.executeCommand<vscode.SymbolInformation[]>(
+        const symbols = (await vscode.commands.executeCommand<vscode.SymbolInformation[]>(
             "vscode.executeWorkspaceSymbolProvider",
-            test.fqn.substr(test.fqn.lastIndexOf(".") + 1));
+            test.fqn.substr(test.fqn.lastIndexOf(".") + 1))).filter((s) => s.kind === vscode.SymbolKind.Method);
 
         try {
             const symbol = await this.findTestLocation(symbols, test);
@@ -39,18 +39,6 @@ export class GotoTest {
         }
 
         throw new Error("Could not find test (no symbols found)");
-    }
-
-    public getTestMethodFqn(testName: string): string {
-        // The symbols are reported on the form Method or Method(string, int) (in case of test cases etc).
-        // We are only interested in the method name, not its arguments
-        const firstParanthesis = testName.indexOf("(");
-
-        if (firstParanthesis > -1) {
-            testName = testName.substring(0, firstParanthesis);
-        }
-
-        return testName;
     }
 
     private isSymbolATestCandidate(s: vscode.SymbolInformation): boolean {
