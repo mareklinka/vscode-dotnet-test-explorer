@@ -168,7 +168,7 @@ function executeDotnetVstest(
   return new Promise((resolve, reject) => {
     const testAssembliesParam = assemblyPaths.map(f => `"${f}"`).join(' ');
     const command =
-      `dotnet vstest ${testAssembliesParam}` + `/ListFullyQualifiedTests /ListTestsTargetPath:"${listTestsTargetPath}"`;
+      `dotnet vstest ${testAssembliesParam} /ListFullyQualifiedTests /ListTestsTargetPath:"${listTestsTargetPath}"`;
 
     Logger.Log(`Executing ${command} in ${testDirectoryPath}`);
 
