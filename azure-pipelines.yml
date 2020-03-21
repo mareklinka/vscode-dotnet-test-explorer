@@ -42,12 +42,6 @@ steps:
   displayName: 'Run tests'
   inputs:
     command: 'custom'
-    customCommand: 'run tslint'
-
-- task: Npm@1
-  displayName: 'Run tests'
-  inputs:
-    command: 'custom'
     customCommand: 'test'
   env:
     DISPLAY: ':99.0'
