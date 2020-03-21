@@ -1,58 +1,60 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 export interface ITestSymbol {
-    parentName: string;
-    fullName: string;
-    documentSymbol: vscode.DocumentSymbol;
+  parentName: string;
+  fullName: string;
+  documentSymbol: vscode.DocumentSymbol;
 }
 
 export class Symbols {
-    public static async getSymbols(uri, removeArgumentsFromMethods?: boolean): Promise<ITestSymbol[]> {
-        return vscode.commands.executeCommand<vscode.DocumentSymbol[]>("vscode.executeDocumentSymbolProvider", uri)
+  public static async getSymbols(uri: vscode.Uri, removeArgumentsFromMethods: boolean): Promise<Array<ITestSymbol>> {
+    return vscode.commands
+      .executeCommand<Array<vscode.DocumentSymbol>>('vscode.executeDocumentSymbolProvider', uri)
 
-            .then((symbols) => {
+      .then(symbols => {
+        if (!symbols) {
+          return [];
+        }
 
-                if (!symbols) {
-                    return [];
-                }
+        const flattenedSymbols = Symbols.flatten(symbols, removeArgumentsFromMethods, '');
 
-                const flattenedSymbols = Symbols.flatten(symbols, removeArgumentsFromMethods);
+        if (removeArgumentsFromMethods) {
+          flattenedSymbols.map(s => s.documentSymbol).forEach(s => (s.name = s.name.replace(/\(.*\)/g, '')));
+        }
 
-                if (removeArgumentsFromMethods) {
-                    flattenedSymbols.map( (s) => s.documentSymbol).forEach( (s) => s.name = s.name.replace(/\(.*\)/g, ""));
-                }
+        return flattenedSymbols;
+      });
+  }
 
-                return flattenedSymbols;
-            });
-    }
+  public static flatten(
+    documentSymbols: Array<vscode.DocumentSymbol>,
+    removeArgumentsFromMethods: boolean,
+    parent: string
+  ): Array<ITestSymbol> {
+    let flattened: Array<ITestSymbol> = [];
 
-    public static flatten(documentSymbols: vscode.DocumentSymbol[], removeArgumentsFromMethods?: boolean, parent?: string): ITestSymbol[] {
+    documentSymbols.map((ds: vscode.DocumentSymbol) => {
+      let nameForCurrentLevel: string;
 
-        let flattened: ITestSymbol[] = [];
+      let nameForSymbol = ds.name;
 
-        documentSymbols.map( (ds: vscode.DocumentSymbol) => {
+      if (ds.kind === vscode.SymbolKind.Method && removeArgumentsFromMethods) {
+        nameForSymbol = nameForSymbol.replace(/\(.*\)/g, '');
+      }
 
-            let nameForCurrentLevel: string;
+      if (ds.kind === vscode.SymbolKind.Class) {
+        nameForCurrentLevel = nameForSymbol;
+      } else {
+        nameForCurrentLevel = parent ? `${parent}.${nameForSymbol}` : nameForSymbol;
+      }
 
-            let nameForSymbol = ds.name;
+      flattened.push({ fullName: nameForCurrentLevel, parentName: parent, documentSymbol: ds });
 
-            if (ds.kind === vscode.SymbolKind.Method && removeArgumentsFromMethods) {
-                nameForSymbol = nameForSymbol.replace(/\(.*\)/g, "");
-            }
+      if (ds.children) {
+        flattened = flattened.concat(Symbols.flatten(ds.children, removeArgumentsFromMethods, nameForCurrentLevel));
+      }
+    });
 
-            if (ds.kind === vscode.SymbolKind.Class) {
-                nameForCurrentLevel = nameForSymbol;
-            } else {
-                nameForCurrentLevel = parent ? `${parent}.${nameForSymbol}` : nameForSymbol;
-            }
-
-            flattened.push({fullName: nameForCurrentLevel, parentName: parent, documentSymbol: ds});
-
-            if (ds.children) {
-                flattened = flattened.concat(Symbols.flatten(ds.children, removeArgumentsFromMethods, nameForCurrentLevel));
-            }
-        });
-
-        return flattened;
-    }
+    return flattened;
+  }
 }

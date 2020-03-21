@@ -1,27 +1,25 @@
-import * as vscode from "vscode";
-import { ITestSymbol, Symbols } from "./symbols";
-import { ITestRunContext } from "./testCommands";
+import * as vscode from 'vscode';
+import { ITestSymbol, Symbols } from './symbols';
+import { ITestRunContext } from './testCommands';
 
 export class FindTestInContext {
+  public async find(doc: vscode.TextDocument, position: vscode.Position): Promise<ITestRunContext | undefined> {
+    return Symbols.getSymbols(doc.uri, true).then((documentSymbols: Array<ITestSymbol>) => {
+      const symbolsInRange = documentSymbols.filter(ds => ds.documentSymbol.range.contains(position));
 
-    public async find(doc: vscode.TextDocument, position: vscode.Position): Promise<ITestRunContext> {
-        return Symbols.getSymbols(doc.uri, true).then( (documentSymbols: ITestSymbol[]) => {
+      let symbolCandidate: ITestSymbol | undefined;
 
-            const symbolsInRange = documentSymbols.filter( (ds) => ds.documentSymbol.range.contains(position));
+      symbolCandidate = symbolsInRange.find(s => s.documentSymbol.kind === vscode.SymbolKind.Method);
 
-            let symbolCandidate: ITestSymbol;
+      if (symbolCandidate) {
+        return { testName: symbolCandidate.fullName, isSingleTest: true, collectCoverage: false };
+      }
 
-            symbolCandidate = symbolsInRange.find( (s) => s.documentSymbol.kind === vscode.SymbolKind.Method);
+      symbolCandidate = symbolsInRange.find(s => s.documentSymbol.kind === vscode.SymbolKind.Class);
 
-            if (symbolCandidate) {
-                return {testName: (symbolCandidate.fullName), isSingleTest: true, collectCoverage: false};
-            }
-
-            symbolCandidate = symbolsInRange.find( (s) => s.documentSymbol.kind === vscode.SymbolKind.Class);
-
-            if (symbolCandidate) {
-                return {testName: symbolCandidate.fullName, isSingleTest: false, collectCoverage: false};
-            }
-        });
-    }
+      if (symbolCandidate) {
+        return { testName: symbolCandidate.fullName, isSingleTest: false, collectCoverage: false };
+      }
+    });
+  }
 }

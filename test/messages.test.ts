@@ -70,7 +70,7 @@ suite("MessagesController - Show warning message", () => {
     test("Adds message type to suppressed messages when suppressMessage action is invoked", () => {
         showWarningMessageStub.resolves(suppressMessageItem);
 
-        return messagesController.showWarningMessage(message).then(() => {
+        return messagesController.showWarningMessage(message)!.then(() => {
             assert(updateSectionStub.calledOnceWith(
                 suppressedMessagesStateKey,
                 sinon.match.array.contains([message.type])),
@@ -84,7 +84,7 @@ suite("MessagesController - Show warning message", () => {
 
         showWarningMessageStub.resolves(suppressMessageItem);
 
-        return messagesController.showWarningMessage(message).then(() => {
+        return messagesController.showWarningMessage(message)!.then(() => {
             assert(updateSectionStub.calledOnceWith(
                 suppressedMessagesStateKey,
                 sinon.match.array.contains([existingSuppressedMessageType])),
@@ -97,7 +97,7 @@ suite("MessagesController - Show warning message", () => {
 
         getSectionStub.onSecondCall().returns([message.type]);
 
-        return messagesController.showWarningMessage(message).then(() => {
+        return messagesController.showWarningMessage(message)!.then(() => {
             assert(updateSectionStub.notCalled,
                 "SuppressedMessages configuration setting value was updated.");
         });

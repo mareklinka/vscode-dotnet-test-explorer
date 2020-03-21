@@ -1,71 +1,80 @@
-import * as vscode from "vscode";
-import { Logger } from "./logger";
-import { TestNode } from "./testNode";
+import * as vscode from 'vscode';
+import { Logger } from './logger';
+import { TestNode } from './testNode';
 
 export class GotoTest {
-
-    public go(test: TestNode): void {
-        vscode.commands.executeCommand<vscode.SymbolInformation[]>(
-            "vscode.executeWorkspaceSymbolProvider",
-            test.fqn,
-        ).then((symbols) => {
-
-            let symbol: vscode.SymbolInformation;
-
-            try {
-                symbol = this.findTestLocation(symbols, test);
-
-                vscode.workspace.openTextDocument(symbol.location.uri).then((doc) => {
-                    vscode.window.showTextDocument(doc).then((editor) => {
-                        const loc = symbol.location.range;
-                        const selection = new vscode.Selection(loc.start.line, loc.start.character, loc.start.line, loc.end.character);
-                        vscode.window.activeTextEditor.selection = selection;
-                        vscode.window.activeTextEditor.revealRange(selection, vscode.TextEditorRevealType.InCenter);
-                    });
-                });
-
-            } catch (r) {
-                Logger.Log(r.message);
-                vscode.window.showWarningMessage(r.message);
-            }
-
-        });
-    }
-
-    public findTestLocation(symbols: vscode.SymbolInformation[], testNode: TestNode): vscode.SymbolInformation {
-
-        if (symbols.length === 0) {
-            throw new Error("Could not find test (no symbols found)");
+  public go(test: TestNode): void {
+    vscode.commands
+      .executeCommand<Array<vscode.SymbolInformation>>('vscode.executeWorkspaceSymbolProvider', test.fqn)
+      .then(symbols => {
+        if (!symbols) {
+          vscode.window.showWarningMessage('Unable to navigate to the selected test - no symbol information available');
+          return;
         }
 
-        const testFqn = testNode.fqn;
+        let symbol: vscode.SymbolInformation;
 
-        symbols = symbols.filter((s) => this.isSymbolATestCandidate(s) && testFqn.endsWith(this.getTestMethodFqn(s.name)));
+        try {
+          symbol = this.findTestLocation(symbols, test);
 
-        if (symbols.length === 0) {
-            throw Error("Could not find test (no symbols matching)");
+          vscode.workspace.openTextDocument(symbol.location.uri).then(doc => {
+            vscode.window.showTextDocument(doc).then(editor => {
+              const loc = symbol.location.range;
+              const selection = new vscode.Selection(
+                loc.start.line,
+                loc.start.character,
+                loc.start.line,
+                loc.end.character
+              );
+
+              if (vscode.window.activeTextEditor) {
+                vscode.window.activeTextEditor.selection = selection;
+                vscode.window.activeTextEditor.revealRange(selection, vscode.TextEditorRevealType.InCenter);
+              }
+            });
+          });
+        } catch (r) {
+          Logger.Log(r.message);
+          vscode.window.showWarningMessage(r.message);
         }
+      });
+  }
 
-        if (symbols.length > 1) {
-            throw Error("Could not find test (found multiple matching symbols)");
-        }
-
-        return symbols[0];
+  public findTestLocation(symbols: Array<vscode.SymbolInformation>, testNode: TestNode): vscode.SymbolInformation {
+    if (symbols.length === 0) {
+      throw new Error('Could not find test (no symbols found)');
     }
 
-    public getTestMethodFqn(testName: string): string {
-        // The symbols are reported on the form Method or Method(string, int) (in case of test cases etc).
-        // We are only interested in the method name, not its arguments
-        const firstParanthesis = testName.indexOf("(");
+    const testFqn = testNode.fqn;
 
-        if (firstParanthesis > -1) {
-            testName = testName.substring(0, firstParanthesis);
-        }
+    symbols = symbols.filter(s => this.isSymbolATestCandidate(s) && testFqn.endsWith(this.getTestMethodFqn(s.name)));
 
-        return testName;
+    if (symbols.length === 0) {
+      throw Error('Could not find test (no symbols matching)');
     }
 
-    private isSymbolATestCandidate(s: vscode.SymbolInformation): boolean {
-        return s.location.uri.toString().endsWith(".fs") ? s.kind === vscode.SymbolKind.Variable : s.kind === vscode.SymbolKind.Method;
+    if (symbols.length > 1) {
+      throw Error('Could not find test (found multiple matching symbols)');
     }
+
+    return symbols[0];
+  }
+
+  public getTestMethodFqn(testName: string): string {
+    // The symbols are reported on the form Method or Method(string, int) (in case of test cases etc).
+    // We are only interested in the method name, not its arguments
+    const firstParanthesis = testName.indexOf('(');
+
+    if (firstParanthesis > -1) {
+      testName = testName.substring(0, firstParanthesis);
+    }
+
+    return testName;
+  }
+
+  private isSymbolATestCandidate(s: vscode.SymbolInformation): boolean {
+    return s.location.uri.toString().endsWith('.fs')
+      ? s.kind === vscode.SymbolKind.Variable
+      : s.kind === vscode.SymbolKind.Method;
+  }
 }
