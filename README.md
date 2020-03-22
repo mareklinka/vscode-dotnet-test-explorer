@@ -9,12 +9,12 @@
 ## Prerequisites
 
 * [.NET Core](https://www.microsoft.com/net/core) is installed
-* NUnit and MSTest requires a dotnet [sdk](https://www.microsoft.com/net/download) version of >= 2.2.104 and running dotnet tooling in English (see [#77](https://github.com/formulahendry/vscode-dotnet-test-explorer/issues/77) for details).
+  * Only SDK 3.1.100 and newer is officially supported - the extension might work with older SDKs but it's not guaranteed
+* For certain features (e.g. code lens, navigating to tests, and running tests in current context) the [C# extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.csharp) must be installed
+* If you want to be able to visualize test coverage, we recommend the [Coverage gutters extension](https://marketplace.visualstudio.com/items?itemName=ryanluker.vscode-coverage-gutters)
 
-## New in 0.7.1
-
-* Code lens symbols are displayed on the code lens row itself and not above
-* To make it easier to see what the extension logs and what the test runner logs the logs for the test runner has been moved to a new output logger called Test explorer (Test runner output)
+## What's new
+The current changelog can be found in [here](releasenotes.md).
 
 ## Usage
 
@@ -28,7 +28,7 @@ By utilizing auto watch (see settings) test can be run upon changing in files.
 
 #### Configuring multiple test projects
 
-Setting dotnet-test-explorer.testProjectPath accepts a glob pattern that should point to your test directories. You can also point to files and it will figure out the corresponding path. 
+Setting dotnet-test-explorer.testProjectPath accepts a glob pattern that should point to your test directories. You can also point to files and it will figure out the corresponding path.
 
 Given the folder structure
 * root
@@ -43,9 +43,19 @@ Due to some performance concerns discovery and test running over multiple direct
 
 #### Debugging
 
-To debug a test, right click the test and choose to Debug test. The option to run and debug test that appear in the code lens are provided by the omnisharp plugin and has nothing to do with this extension.
+To debug a test, right click the test and choose to Debug test(s). You can also right click on a folder and debug all tests within that folder.
+
+The option to run and debug test that appear in the code lens are provided by the omnisharp plugin and has nothing to do with this extension.
 
 The debugger might get stuck before loading your test assembly code. If this happens you can continue the debug process (F5) and it should load the rest of the assemblies and stop and the desired breakpoint.
+
+#### Test coverage
+
+To collect test coverage for a test or a set of tests, right click on the required scope and select Cover test(s). Collecting coverage is done using [Coverlet collector](https://github.com/tonerdo/coverlet). This means that for the coverage collection to work, you will need to setup your projects according to the guide over there.
+
+When running tests with coverage, the extension produces an LCOV file that is then copied into your workspace so that other extensions can pick it up. It is possible to customize the path where the coverage file is dropped using extension configuration (see below). You can also choose whether to include test assemblies in the coverage report.
+
+This extension does not do coverage visualization. For that, you can use the [Coverage gutters](https://github.com/ryanluker/vscode-coverage-gutters).
 
 #### Stopping the current test runner(s)
 
@@ -63,10 +73,9 @@ Text from the dotnet test output as well as debug info is written to the Output/
 ## Keyboard shortcuts
 
 * Run all tests, default Alt+R Alt+A
-
 * Rerun last command, default Alt+R Alt+R
-
-* Run test(s) in context, default Alt+R Alt+C
+* Run test(s) in context, default Ctrl+U Ctrl+R
+* Debug test(s) in context, default Ctrl+U Ctrl+D
 
 ## Settings
 
@@ -83,13 +92,15 @@ Text from the dotnet test output as well as debug info is written to the Output/
 * `dotnet-test-explorer.testArguments`: Additional arguments that are added to the dotnet test command
 * `dotnet-test-explorer.leftClickAction`: What happens when a test in the list is left clicked. (Default is **gotoTest**)
 * `dotnet-test-explorer.runInParallel`: If true, will discover/build and run test in parallel if you have multiple test projects (Default is **false**)
+* `dotnet-test-explorer.includeTestAssemblyCoverage`: If true, test assemblies will be included in the coverage report (Default is **false**)
+* `dotnet-test-explorer.coverageFilePath`: The workspace-relative path to a directory where to put the coverage report after collection is done (Default is **""**)
 
 ## Known issues
 ##### Go to test does not work with multiple workspaces
 This is because of limitations in the omnisharp extensions. We can only navigate to symbols which are in the currently selected workspace.
 
 ##### Test result is not shown in CodeLens / tree
-Try and change the setting dotnet-test-explorer.pathForResultFile to point to a folder you have access right too. CodeLens functionality also requires the [C# extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.csharp)) 
+Try and change the setting dotnet-test-explorer.pathForResultFile to point to a folder you have access right too. CodeLens functionality also requires the [C# extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.csharp))
 
 ##### No tree view or color coded explorer for NUnit / MSTest
 This requires you to run dotnet SDK version 2.2.104 or higher. The extension tries to run the commands with the English cli but if things are not working as expected anyway it may be due to the cli language (see [#77](https://github.com/formulahendry/vscode-dotnet-test-explorer/issues/77) for details).
@@ -103,15 +114,6 @@ See [#56](https://github.com/formulahendry/vscode-dotnet-test-explorer/issues/56
 ##### Project discovery with UNC Paths doesn't work
 See [#179](https://github.com/formulahendry/vscode-dotnet-test-explorer/issues/179)
 
-## Telemetry data
-
-By default, anonymous telemetry data collection is turned on to understand user behavior to improve this extension. To disable it, update the settings.json as below:
-```json
-{
-    "dotnet-test-explorer.enableTelemetry": false
-}
-```
-
 ## Change Log
 
 See Change Log [here](CHANGELOG.md)
@@ -121,6 +123,8 @@ See Change Log [here](CHANGELOG.md)
 If you find any bug or have any suggestion/feature request, please submit the [issues](https://github.com/formulahendry/vscode-dotnet-test-explorer/issues) to the GitHub Repo.
 
 ## ❤️ Contributors
+
+Thanks to the [original developer](https://github.com/formulahendry) and the all the contributors!
 
 Thanks to all the [contributors](https://github.com/formulahendry/vscode-dotnet-test-explorer/graphs/contributors)!
 

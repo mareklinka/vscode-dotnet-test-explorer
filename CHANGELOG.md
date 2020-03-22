@@ -1,10 +1,13 @@
+## 0.8.1 (unfinished)
+* A lot of stuff but no PRs (forked and developed internally for a while)
+
 ## 0.7.1 (2019-06-12)
 * [#219](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/219): Place code lens icon on lens row
 
 ## 0.7.0 (2019-05-09)
-* [#209](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/209): Set cli language to english before executing our commands 
-* [#208](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/208): Fixes to xunit theories names and go to test 
-* [#204](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/204): Adds beta for debug test 
+* [#209](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/209): Set cli language to english before executing our commands
+* [#208](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/208): Fixes to xunit theories names and go to test
+* [#204](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/204): Adds beta for debug test
 
 ## 0.6.6 (2019-04-02)
 * [#193](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/193): Added setting to run things in parallel
@@ -30,7 +33,7 @@
 ## 0.6.0 (2018-11-14)
 * [#165](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/165): Multiple workspace support
 * [#164](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/164): Double-quote argument to dotnet --filter
-* [#156](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/156): Fix unfound tests when using Go to Test feature with F# 
+* [#156](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/156): Fix unfound tests when using Go to Test feature with F#
 
 ## 0.5.5 (2018-11-04)
 * [#158](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/158): Fixed code lense and test in context after executeDocumentSymbolProvider changes
@@ -56,7 +59,7 @@
 * [#117](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/117): Better test result icons for light theme
 
 ## 0.5.0 (2018-08-11)
-* [#112](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/112): Support multiple test projects in a workspace 
+* [#112](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/112): Support multiple test projects in a workspace
 * [#111](https://github.com/formulahendry/vscode-dotnet-test-explorer/pull/111): Left clicking on test open test by default
 
 ## 0.4.0 (2018-07-11)
