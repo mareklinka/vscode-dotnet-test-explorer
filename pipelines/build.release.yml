@@ -1,0 +1,88 @@
+trigger: none
+pr: none
+
+stages:
+  - stage:
+    displayName: Multiplatform tests
+    jobs:
+      - job:
+        strategy:
+          matrix:
+            linux:
+              imageName: 'ubuntu-latest'
+            mac:
+              imageName: 'macOS-latest'
+            windows:
+              imageName: 'windows-latest'
+        displayName: Run tests
+        pool:
+          vmImage: $(imageName)
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '12.x'
+            displayName: 'Install Node.js'
+          - bash: |
+              /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+              echo ">>> Started xvfb"
+            displayName: Start xvfb
+            condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+          - task: Npm@1
+            displayName: 'Install dependencies'
+            inputs:
+              command: 'ci'
+          - task: Npm@1
+            displayName: 'Lint'
+            inputs:
+              command: 'custom'
+              customCommand: 'run tslint'
+          - task: Npm@1
+            displayName: 'Run tests'
+            inputs:
+              command: 'custom'
+              customCommand: 'test'
+            env:
+              DISPLAY: ':99.0'
+  - stage:
+    displayName: Release
+    jobs:
+      - job:
+        displayName: 'Publish to GitHub'
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '12.x'
+            displayName: 'Install Node.js'
+          - task: Npm@1
+            displayName: 'Install dependencies'
+            inputs:
+              command: 'ci'
+          - task: Npm@1
+            displayName: Install vsce
+            inputs:
+              command: custom
+              customCommand: install -g vsce
+          - task: Bash@3
+            displayName: Create package
+            inputs:
+              targetType: inline
+              script: |
+                vsce package
+                VERSION=$(node -pe "require('./package.json')['version']")
+                echo "##vso[task.setvariable variable=VERSION]${VERSION}"
+          - task: GitHubRelease@1
+            inputs:
+              gitHubConnection: 'github.com_mareklinka'
+              repositoryName: 'mareklinka/vscode-dotnet-test-explorer'
+              action: 'create'
+              target: '$(Build.SourceVersion)'
+              tagSource: userSpecifiedTag
+              tag: 'release-$(VERSION)'
+              title: 'Release $(VERSION)'
+              releaseNotesFilePath: 'releasenotes.md'
+              assets: '*.vsix'
+              changeLogCompareToRelease: 'lastFullRelease'
+              changeLogType: 'commitBased'
+              assetUploadMode: delete
