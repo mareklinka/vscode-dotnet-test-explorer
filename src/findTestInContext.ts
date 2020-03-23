@@ -4,7 +4,7 @@ import { ITestRunContext } from './testCommands';
 
 export class FindTestInContext {
   public async find(doc: vscode.TextDocument, position: vscode.Position): Promise<ITestRunContext | undefined> {
-    return Symbols.getSymbols(doc.uri, true).then((documentSymbols: Array<ITestSymbol>) => {
+    return Symbols.getSymbols(doc.uri).then((documentSymbols: Array<ITestSymbol>) => {
       const symbolsInRange = documentSymbols.filter(ds => ds.documentSymbol.range.contains(position));
 
       let symbolCandidate: ITestSymbol | undefined;

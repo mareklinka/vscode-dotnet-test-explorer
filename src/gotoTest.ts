@@ -48,7 +48,7 @@ export class GotoTest {
     const candidates: Map<string, ITestSymbolLocation> = new Map<string, ITestSymbolLocation>();
 
     for (let i = 0; i < symbols.length; ++i) {
-      const docSymbols = await Symbols.getSymbols(symbols[i].location.uri, true);
+      const docSymbols = await Symbols.getSymbols(symbols[i].location.uri);
 
       const candidate = docSymbols.find(ts => this.isSymbolATestCandidate(symbols[i]) && ts.fullName === testNode.fqn);
 

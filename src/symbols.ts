@@ -7,7 +7,7 @@ export interface ITestSymbol {
 }
 
 export class Symbols {
-  public static async getSymbols(uri: vscode.Uri, removeArgumentsFromMethods: boolean): Promise<Array<ITestSymbol>> {
+  public static async getSymbols(uri: vscode.Uri): Promise<Array<ITestSymbol>> {
     return vscode.commands
       .executeCommand<Array<vscode.DocumentSymbol>>('vscode.executeDocumentSymbolProvider', uri)
       .then(symbols => {
@@ -15,33 +15,34 @@ export class Symbols {
           return [];
         }
 
-        const flattenedSymbols = Symbols.flatten(symbols, removeArgumentsFromMethods, '');
+        const flattenedSymbols = Symbols.flatten(symbols, '', false);
 
-        if (removeArgumentsFromMethods) {
-          flattenedSymbols.map(s => s.documentSymbol).forEach(s => (s.name = s.name.replace(/\(.*\)/g, '')));
-        }
+        flattenedSymbols.map(s => s.documentSymbol).forEach(s => (s.name = s.name.replace(/\(.*\)/g, '')));
 
-        return flattenedSymbols.map(s => this.constructFqnForSymbol(s, flattenedSymbols));
+        return flattenedSymbols;
       });
   }
 
   public static flatten(
     documentSymbols: Array<vscode.DocumentSymbol>,
-    removeArgumentsFromMethods: boolean,
-    parent: string
+    parent: string,
+    isParentClass: boolean
   ): Array<ITestSymbol> {
     let flattened: Array<ITestSymbol> = [];
-
     documentSymbols.map((ds: vscode.DocumentSymbol) => {
       let nameForCurrentLevel: string;
       let nameForSymbol = ds.name;
 
-      if (ds.kind === vscode.SymbolKind.Method && removeArgumentsFromMethods) {
+      if (ds.kind === vscode.SymbolKind.Method) {
         nameForSymbol = nameForSymbol.replace(/\(.*\)/g, '');
       }
 
       if (ds.kind === vscode.SymbolKind.Class) {
-        nameForCurrentLevel = nameForSymbol;
+        if (isParentClass) {
+          nameForCurrentLevel = parent + '+' + nameForSymbol.substr(parent.length + 1);
+        } else {
+          nameForCurrentLevel = nameForSymbol;
+        }
       } else {
         nameForCurrentLevel = parent ? `${parent}.${nameForSymbol}` : nameForSymbol;
       }
@@ -49,59 +50,16 @@ export class Symbols {
       flattened.push({ fullName: nameForCurrentLevel, parentName: parent, documentSymbol: ds });
 
       if (ds.children) {
-        flattened = flattened.concat(Symbols.flatten(ds.children, removeArgumentsFromMethods, nameForCurrentLevel));
+        flattened = flattened.concat(
+          Symbols.flatten(
+            ds.children,
+            nameForCurrentLevel,
+            ds.kind === vscode.SymbolKind.Class
+          )
+        );
       }
     });
 
     return flattened;
-  }
-
-  private static constructFqnForSymbol(symbol: ITestSymbol, documentSymbols: Array<ITestSymbol>): ITestSymbol {
-    const isMethod = symbol.documentSymbol.kind === vscode.SymbolKind.Method;
-    const parts = symbol.fullName.split('.');
-
-    let rootNamespaceBuilder = '';
-    let i = 0;
-
-    do {
-      rootNamespaceBuilder += rootNamespaceBuilder ? `.${parts[i]}` : parts[i];
-
-      ++i;
-    } while (!documentSymbols.find(s => s.fullName === rootNamespaceBuilder));
-
-    let isParentClass =
-      // tslint:disable-next-line: no-non-null-assertion
-      documentSymbols.find(s => s.fullName === rootNamespaceBuilder)!.documentSymbol.kind === vscode.SymbolKind.Class;
-    let fqnBuilder = rootNamespaceBuilder;
-    let builder = rootNamespaceBuilder;
-    const methodName = parts[parts.length - 1];
-
-    for (i; i < parts.length - (isMethod ? 1 : 0); ++i) {
-      if (isParentClass) {
-        fqnBuilder += `+${parts[i]}`;
-      } else {
-        fqnBuilder += `.${parts[i]}`;
-      }
-
-      builder += `.${parts[i]}`;
-
-      const nextSymbol = documentSymbols.find(s => s.fullName === builder);
-
-      if (nextSymbol) {
-        isParentClass = (nextSymbol && nextSymbol.documentSymbol.kind === vscode.SymbolKind.Class);
-      } else {
-        isParentClass = false;
-      }
-    }
-
-    if (isMethod) {
-      fqnBuilder += `.${methodName}`;
-    }
-
-    return {
-      fullName: fqnBuilder,
-      parentName: fqnBuilder.substr(0, fqnBuilder.lastIndexOf('.')),
-      documentSymbol: symbol.documentSymbol
-    };
   }
 }

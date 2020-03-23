@@ -36,6 +36,24 @@
             "problemMatcher": [
                 "$tslint5"
             ]
+        },
+        {
+            "label": "test-compile",
+            "command": "npm",
+            "type": "shell",
+            "args": [
+                "run",
+                "test-compile"
+            ],
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "presentation": {
+                "reveal": "never",
+                "revealProblems": "onProblem",
+                "clear": true
+            },
+            "group": "build"
         }
     ]
 }
