@@ -54,7 +54,7 @@ export class TestStatusCodeLensProvider implements CodeLensProvider {
     const results = this.testResults;
     const showDuration = Utility.getConfiguration().get<boolean>('showTestDuration');
 
-    return Symbols.getSymbols(document.uri, true).then((symbols: Array<ITestSymbol>) => {
+    return Symbols.getSymbols(document.uri).then((symbols: Array<ITestSymbol>) => {
       const mapped: Array<CodeLens> = [];
       for (const symbol of symbols.filter(x => x.documentSymbol.kind === SymbolKind.Method)) {
         for (const result of results.values()) {

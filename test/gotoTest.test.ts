@@ -35,7 +35,7 @@ suite('Find test location', () => {
     ];
 
     getSymbolsStub
-      .withArgs(symbols[0].location.uri, sinon.match.bool)
+      .withArgs(symbols[0].location.uri)
       .returns(Promise.resolve(testSymbols));
 
     const testNode = new TestNode('Test', 'Test', '', [], []);
@@ -53,7 +53,7 @@ suite('Find test location', () => {
     ];
 
     getSymbolsStub
-      .withArgs(symbols[0].location.uri, sinon.match.bool)
+      .withArgs(symbols[0].location.uri)
       .returns(Promise.resolve(testSymbols));
 
     const testNode = new TestNode('Test', 'Test', '', [], []);
@@ -75,7 +75,7 @@ suite('Find test location', () => {
     ];
 
     getSymbolsStub
-      .withArgs(symbols[0].location.uri, sinon.match.bool)
+      .withArgs(symbols[0].location.uri)
       .returns(Promise.resolve(testSymbols));
 
     const testNode = new TestNode('Test with spaces', 'Test with spaces', '', [], []);
@@ -120,7 +120,7 @@ suite('Find test location', () => {
     ];
 
     for (let i = 0; i < symbols.length; ++i) {
-      getSymbolsStub.withArgs(symbols[i].location.uri, sinon.match.bool).returns(Promise.resolve([testSymbols[i]]));
+      getSymbolsStub.withArgs(symbols[i].location.uri).returns(Promise.resolve([testSymbols[i]]));
     }
 
     const testNode = new TestNode('Test', 'Test', '', [], []);
@@ -141,7 +141,7 @@ suite('Find test location', () => {
     ];
 
     for (let i = 0; i < symbols.length; ++i) {
-      getSymbolsStub.withArgs(symbols[i].location.uri, sinon.match.bool).returns(Promise.resolve([testSymbols[i]]));
+      getSymbolsStub.withArgs(symbols[i].location.uri).returns(Promise.resolve([testSymbols[i]]));
     }
 
     const testNode = new TestNode('Test', 'Test', '', [], []);
@@ -166,7 +166,7 @@ suite('Find test location', () => {
     ];
 
     for (let i = 0; i < symbols.length; ++i) {
-      getSymbolsStub.withArgs(symbols[i].location.uri, sinon.match.bool).returns(Promise.resolve([testSymbols[i]]));
+      getSymbolsStub.withArgs(symbols[i].location.uri).returns(Promise.resolve([testSymbols[i]]));
     }
 
     const testNode = new TestNode('Test', 'Test', '', [], []);
@@ -191,7 +191,7 @@ suite('Find test location', () => {
     ];
 
     for (let i = 0; i < symbols.length; ++i) {
-      getSymbolsStub.withArgs(symbols[i].location.uri, sinon.match.bool).returns(Promise.resolve([testSymbols[i]]));
+      getSymbolsStub.withArgs(symbols[i].location.uri).returns(Promise.resolve([testSymbols[i]]));
     }
 
     const testNode = new TestNode('Test', 'Test', '', [], []);
