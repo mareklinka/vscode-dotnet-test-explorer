@@ -7,7 +7,7 @@ suite('Icon tests', () => {
     const node = new TestNode('Loading node', 'Loading node', '', [], []);
     node.setAsLoading();
 
-    assert.equal(node.icon, 'spinner.svg');
+    assert.strictEqual(node.icon, 'spinner.svg');
   });
 
   test('Folder with no test result', () => {
@@ -19,7 +19,7 @@ suite('Icon tests', () => {
       [new TestNode('parent.child', 'child', '', [], [])]
     );
 
-    assert.equal(node.icon, 'namespace.png');
+    assert.strictEqual(node.icon, 'namespace.png');
   });
 
   test('Folder with one failed test result', () => {
@@ -36,7 +36,7 @@ suite('Icon tests', () => {
       [new TestNode('parent.child', 'child', '', [], [])]
     );
 
-    assert.equal(node.icon, 'namespaceFailed.png');
+    assert.strictEqual(node.icon, 'namespaceFailed.png');
   });
 
   test('Folder with one not executed test result', () => {
@@ -53,7 +53,7 @@ suite('Icon tests', () => {
       [new TestNode('parent.child', 'child', '', [], [])]
     );
 
-    assert.equal(node.icon, 'namespaceNotExecuted.png');
+    assert.strictEqual(node.icon, 'namespaceNotExecuted.png');
   });
 
   test('Folder with all passed test result', () => {
@@ -70,7 +70,7 @@ suite('Icon tests', () => {
       [new TestNode('parent.child', 'child', '', [], [])]
     );
 
-    assert.equal(node.icon, 'namespacePassed.png');
+    assert.strictEqual(node.icon, 'namespacePassed.png');
   });
 
   test('Folder with all passed test result (none xunit result file)', () => {
@@ -88,7 +88,7 @@ suite('Icon tests', () => {
       [new TestNode('parent.child', 'child', '', [], [])]
     );
 
-    assert.equal(node.icon, 'namespacePassed.png');
+    assert.strictEqual(node.icon, 'namespacePassed.png');
   });
 
   test('Test with no test result', () => {
@@ -98,29 +98,28 @@ suite('Icon tests', () => {
   });
 
   test('Test with passed test result', () => {
-    const testResult = [GetTestResult('1', 'Passed', 'NameSpace.MyClass', 'NameSpace.MyClass.Test1')];
+    const testResult = [GetTestResult('1', 'Passed', 'NameSpace.MyClass', 'Test1')];
     const node = new TestNode('NameSpace.MyClass.Test1', 'Test1', '', testResult, []);
 
-    assert.equal(node.icon, 'testPassed.png');
+    assert.strictEqual(node.icon, 'testPassed.png');
   });
 
   test('Test with failed test result', () => {
-    const testResult = [GetTestResult('1', 'Failed', 'NameSpace.MyClass', 'NameSpace.MyClass.Test1')];
+    const testResult = [GetTestResult('1', 'Failed', 'NameSpace.MyClass', 'Test1')];
     const node = new TestNode('NameSpace.MyClass.Test1', 'Test1', '', testResult, []);
 
-    assert.equal(node.icon, 'testFailed.png');
+    assert.strictEqual(node.icon, 'testFailed.png');
   });
 
   test('Test with not executed test result', () => {
-    const testResult = [GetTestResult('1', 'NotExecuted', 'NameSpace.MyClass', 'NameSpace.MyClass.Test1')];
+    const testResult = [GetTestResult('1', 'NotExecuted', 'NameSpace.MyClass', 'Test1')];
     const node = new TestNode('NameSpace.MyClass.Test1', 'Test1', '', testResult, []);
 
-    assert.equal(node.icon, 'testNotExecuted.png');
+    assert.strictEqual(node.icon, 'testNotExecuted.png');
   });
 });
 
 function GetTestResult(id: string, outcome: string, className: string, method: string) {
-  const testResult = new TestResult(id, outcome, '', '');
-  testResult.updateName(className, method);
+  const testResult = new TestResult(id, outcome, '', '', className, method);
   return testResult;
 }

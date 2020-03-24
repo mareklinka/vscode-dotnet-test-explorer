@@ -7,7 +7,7 @@ suite('Problems tests', () => {
     const results = [GetTestResult('1', 'Passed', '', '')];
 
     const problems = Problems.createProblemsFromResults(results);
-    assert.equal(problems.length, 0);
+    assert.strictEqual(problems.length, 0);
   });
 
   test('One results with stacktrace', () => {
@@ -21,8 +21,8 @@ suite('Problems tests', () => {
     ];
 
     const problems = Problems.createProblemsFromResults(results);
-    assert.equal(problems['D:\\xunittests\\TestClass1.cs'].length, 1);
-    assert.equal(problems['D:\\xunittests\\TestClass1.cs'][0].message, 'Some assert error');
+    assert.strictEqual(problems['D:\\xunittests\\TestClass1.cs'].length, 1);
+    assert.strictEqual(problems['D:\\xunittests\\TestClass1.cs'][0].message, 'Some assert error');
   });
 
   test('One results with multiple stacktrace returns last link', () => {
@@ -39,8 +39,9 @@ suite('Problems tests', () => {
 
     const problems = Problems.createProblemsFromResults(results);
 
-    assert.equal(problems['D:\\xunittests\\TestClass1.cs'].length, 1);
-    assert.equal(problems['D:\\xunittests\\TestClass1.cs'][0].range.start.line, 23); // range is 0 based, so line 24 = 23.
+    assert.strictEqual(problems['D:\\xunittests\\TestClass1.cs'].length, 1);
+    // range is 0 based, so line 24 = 23.
+    assert.strictEqual(problems['D:\\xunittests\\TestClass1.cs'][0].range.start.line, 23);
   });
 
   test('Two results with stacktrace in different files', () => {
@@ -61,11 +62,11 @@ suite('Problems tests', () => {
 
     const problems = Problems.createProblemsFromResults(results);
 
-    assert.equal(problems['D:\\xunittests\\TestClass1.cs'].length, 1);
-    assert.equal(problems['D:\\xunittests\\TestClass1.cs'][0].message, 'Some assert error');
+    assert.strictEqual(problems['D:\\xunittests\\TestClass1.cs'].length, 1);
+    assert.strictEqual(problems['D:\\xunittests\\TestClass1.cs'][0].message, 'Some assert error');
 
-    assert.equal(problems['D:\\xunittests\\TestClass2.cs'].length, 1);
-    assert.equal(problems['D:\\xunittests\\TestClass2.cs'][0].message, 'Another assert error');
+    assert.strictEqual(problems['D:\\xunittests\\TestClass2.cs'].length, 1);
+    assert.strictEqual(problems['D:\\xunittests\\TestClass2.cs'][0].message, 'Another assert error');
   });
 
   test('Two results with stacktrace in same file', () => {
@@ -85,12 +86,12 @@ suite('Problems tests', () => {
     ];
 
     const problems = Problems.createProblemsFromResults(results);
-    assert.equal(problems['D:\\xunittests\\TestClass1.cs'].length, 2);
-    assert.equal(problems['D:\\xunittests\\TestClass1.cs'][0].message, 'Some assert error');
-    assert.equal(problems['D:\\xunittests\\TestClass1.cs'][1].message, 'Another assert error');
+    assert.strictEqual(problems['D:\\xunittests\\TestClass1.cs'].length, 2);
+    assert.strictEqual(problems['D:\\xunittests\\TestClass1.cs'][0].message, 'Some assert error');
+    assert.strictEqual(problems['D:\\xunittests\\TestClass1.cs'][1].message, 'Another assert error');
   });
 });
 
 function GetTestResult(id: string, outcome: string, message: string, stackTrace: string) {
-  return new TestResult(id, outcome, message, stackTrace);
+  return new TestResult(id, outcome, message, stackTrace, '', '');
 }
