@@ -4,19 +4,18 @@ export interface ITestResult {
 }
 
 export class TestResult {
-  private className = '';
-  private method = '';
-
   public constructor(
     private readonly _testId: string,
     private readonly _outcome: string,
     private readonly _message: string,
     private readonly _stackTrace: string,
+    private readonly _className: string,
+    private readonly _method: string,
     private readonly _duration?: string
   ) {}
 
   public get fullName(): string {
-    return this.className + '.' + this.method;
+    return this._className + '.' + this._method;
   }
 
   public get id(): string {
@@ -46,18 +45,6 @@ export class TestResult {
   public matchesTheory(className: string, method: string): boolean {
     // Theory methodes include also the parameters,
     // so the "(" character identifies the method as a theory method.
-    return this.method.indexOf(`${method}(`) > -1 && this.className.endsWith(className);
-  }
-
-  public updateName(className: string, method: string): void {
-    this.className = className;
-
-    // xUnit includes the class name in the name of the unit test
-    // i.e. classname.method
-    if (method.startsWith(className)) {
-      this.method = method.substring(className.length + 1); // +1 to include the .
-    } else {
-      this.method = method;
-    }
+    return this._method.indexOf(`${method}(`) > -1 && this._className.endsWith(className);
   }
 }
