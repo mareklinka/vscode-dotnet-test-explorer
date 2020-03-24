@@ -20,13 +20,12 @@
     "F#"
   ],
   "bugs": {
-    "url": "https://github.com/formulahendry/vscode-dotnet-test-explorer/issues",
-    "email": "formulahendry@gmail.com"
+    "url": "https://github.com/mareklinka/vscode-dotnet-test-explorer/issues"
   },
-  "homepage": "https://github.com/formulahendry/vscode-dotnet-test-explorer/blob/master/README.md",
+  "homepage": "https://github.com/mareklinka/vscode-dotnet-test-explorer/blob/master/README.md",
   "repository": {
     "type": "git",
-    "url": "https://github.com/formulahendry/vscode-dotnet-test-explorer.git"
+    "url": "https://github.com/mareklinka/vscode-dotnet-test-explorer.git"
   },
   "activationEvents": [
     "workspaceContains:**/*.csproj",
