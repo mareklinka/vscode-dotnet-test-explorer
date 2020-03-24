@@ -25,3 +25,4 @@ This is the first version after forking the original repository. A ton of fixes 
 * Enabled strict null checking for increased robustness
 * Bumped a lot of npm packages to newer versions
 * Added CI and release builds (via Azure DevOps Pipelines)
+* Improved the TRX (test results file) parsing engine to allow for better extensibility/versioning
