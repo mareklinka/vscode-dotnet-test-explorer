@@ -40,9 +40,16 @@ export class Executor {
     process.env.DOTNET_CLI_UI_LANGUAGE = 'en';
     process.env.VSTEST_HOST_DEBUG = '0';
 
+    const env = JSON.parse(JSON.stringify(process.env));
+
+    if (process.env.DOTNET_ROOT && process.env.DOTNET_ROOT.indexOf('ms-vsliveshare.vsliveshare')) {
+      delete env['DOTNET_ROOT'];
+      delete env['DOTNET_ROOT(X86)'];
+    }
+
     const childProcess = exec(
       this.handleWindowsEncoding(command),
-      { encoding: 'utf8', maxBuffer: 5120000, cwd },
+      { encoding: 'utf8', maxBuffer: 5120000, cwd, env },
       callback
     );
 
@@ -75,9 +82,16 @@ export class Executor {
     process.env.DOTNET_CLI_UI_LANGUAGE = 'en';
     process.env.VSTEST_HOST_DEBUG = '1';
 
+    const env = JSON.parse(JSON.stringify(process.env));
+
+    if (process.env.DOTNET_ROOT && process.env.DOTNET_ROOT.indexOf('ms-vsliveshare.vsliveshare')) {
+      delete env['DOTNET_ROOT'];
+      delete env['DOTNET_ROOT(X86)'];
+    }
+
     const childProcess = exec(
       this.handleWindowsEncoding(command),
-      { encoding: 'utf8', maxBuffer: 5120000, cwd },
+      { encoding: 'utf8', maxBuffer: 5120000, cwd, env },
       callback
     );
 
